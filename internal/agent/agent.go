@@ -52,7 +52,8 @@ func PullMetrics(m *runtime.MemStats) {
 		sendGauge(url+"TotalAlloc/"+strconv.FormatUint(m.TotalAlloc, 10), client)
 		sendGauge(url+"RandomValue/"+strconv.FormatFloat(RandomValue, 'f', -1, 64), client)
 
-		client.Post("http://127.0.0.1:8080/update/counter/PollCount/1", "text/plain", nil)
+		resp, _ := client.Post("http://127.0.0.1:8080/update/counter/PollCount/1", "text/plain", nil)
+		resp.Body.Close()
 
 		time.Sleep(reportInterval)
 	}
