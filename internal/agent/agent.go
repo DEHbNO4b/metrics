@@ -20,8 +20,8 @@ func ReadRuntimeMetrics(m *runtime.MemStats) {
 }
 func PullMetrics(m *runtime.MemStats) {
 	url := "http://127.0.0.1:8080/update/"
-	// client := http.Client{Timeout: 100 * time.Millisecond}
-	client := http.Client{}
+	client := http.Client{Timeout: 1000 * time.Millisecond}
+	// client := http.Client{}
 	var RandomValue float64
 	for {
 		RandomValue = rand.Float64()
