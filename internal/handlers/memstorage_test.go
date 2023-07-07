@@ -38,6 +38,7 @@ func TestMemStorage_SetMetrics(t *testing.T) {
 			w := httptest.NewRecorder()
 			tt.ms.SetGauge(w, req)
 			result := w.Result()
+			result.Body.Close()
 			assert.Equal(t, tt.want.statusCode, result.StatusCode)
 		})
 	}
@@ -106,6 +107,7 @@ func TestMemStorage_SetGauge(t *testing.T) {
 			w := httptest.NewRecorder()
 			tt.ms.SetGauge(w, req)
 			result := w.Result()
+			result.Body.Close()
 			assert.Equal(t, tt.want.statusCode, result.StatusCode)
 		})
 	}
@@ -173,6 +175,7 @@ func TestMemStorage_SetCounter(t *testing.T) {
 			w := httptest.NewRecorder()
 			tt.ms.SetCounter(w, req)
 			result := w.Result()
+			result.Body.Close()
 			assert.Equal(t, tt.want.statusCode, result.StatusCode)
 		})
 	}
