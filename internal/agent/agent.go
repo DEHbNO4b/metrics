@@ -1,6 +1,7 @@
 package agent
 
 import (
+	"io"
 	"math/rand"
 	"net/http"
 	"runtime"
@@ -23,7 +24,7 @@ func ReadRuntimeMetrics(m *runtime.MemStats) {
 
 }
 func PullMetrics(m *runtime.MemStats) {
-	url := "http://localhost:8080/update/gauge/"
+	url := "http://localhost:8080/update/"
 	client := http.Client{Timeout: 10000 * time.Millisecond}
 	// client := http.Client{}
 	var RandomValue float64
@@ -68,6 +69,7 @@ func PullMetrics(m *runtime.MemStats) {
 
 func sendGauge(uri string, client http.Client) error {
 	resp, err := client.Post(uri, "text/plain", nil)
+	io.Copy(io.Discard, resp.Body)
 	resp.Body.Close()
 	return err
 }
