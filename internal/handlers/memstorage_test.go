@@ -61,7 +61,7 @@ func TestMemStorage_SetGauge(t *testing.T) {
 	}{
 		{
 			ms:      memSt,
-			name:    "positive test #1",
+			name:    "positive test ",
 			request: "/update/gauge/somemetric/300",
 			want: want{
 				statusCode: 200,
@@ -69,10 +69,34 @@ func TestMemStorage_SetGauge(t *testing.T) {
 		},
 		{
 			ms:      memSt,
-			name:    "negative test #2",
+			name:    "negative test ",
 			request: "/update/gauge/somemetric/k",
 			want: want{
 				statusCode: 400,
+			},
+		},
+		{
+			ms:      memSt,
+			name:    "zero test",
+			request: "/update/gauge/somemetric/0",
+			want: want{
+				statusCode: 200,
+			},
+		},
+		{
+			ms:      memSt,
+			name:    "big number ",
+			request: "/update/gauge/somemetric/9845649.8816513",
+			want: want{
+				statusCode: 200,
+			},
+		},
+		{
+			ms:      memSt,
+			name:    "big negative number ",
+			request: "/update/gauge/somemetric/-9845649.8816513",
+			want: want{
+				statusCode: 200,
 			},
 		},
 	}
@@ -104,7 +128,7 @@ func TestMemStorage_SetCounter(t *testing.T) {
 	}{
 		{
 			ms:      memSt,
-			name:    "positive test #1",
+			name:    "positive test ",
 			request: "/update/counter/somemetric/3500",
 			want: want{
 				statusCode: 200,
@@ -112,10 +136,34 @@ func TestMemStorage_SetCounter(t *testing.T) {
 		},
 		{
 			ms:      memSt,
-			name:    "negative test #2",
+			name:    "negative test ",
 			request: "/update/counter/somemetric/k",
 			want: want{
 				statusCode: 400,
+			},
+		},
+		{
+			ms:      memSt,
+			name:    "zero test ",
+			request: "/update/counter/somemetric/0",
+			want: want{
+				statusCode: 200,
+			},
+		},
+		{
+			ms:      memSt,
+			name:    "big number ",
+			request: "/update/counter/somemetric/98456498816513",
+			want: want{
+				statusCode: 200,
+			},
+		},
+		{
+			ms:      memSt,
+			name:    "big negative number ",
+			request: "/update/counter/somemetric/-98456498816513",
+			want: want{
+				statusCode: 200,
 			},
 		},
 	}
