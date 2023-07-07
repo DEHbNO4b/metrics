@@ -20,11 +20,11 @@ func ReadRuntimeMetrics(m *runtime.MemStats) {
 }
 func PullMetrics(m *runtime.MemStats) {
 	url := "http://127.0.0.1:8080/update/"
-	client := http.Client{Timeout: 1000 * time.Millisecond}
+	client := http.Client{Timeout: 5000 * time.Millisecond}
 	// client := http.Client{}
 	var RandomValue float64
 	for {
-		RandomValue = rand.Float64()
+
 		go sendGauge(url+"Alloc/"+strconv.FormatUint(m.Alloc, 10), client)
 		go sendGauge(url+"BuckHashSys/"+strconv.FormatUint(m.BuckHashSys, 10), client)
 		go sendGauge(url+"Frees/"+strconv.FormatUint(m.Frees, 10), client)
@@ -51,6 +51,7 @@ func PullMetrics(m *runtime.MemStats) {
 		go sendGauge(url+"StackSys/"+strconv.FormatUint(m.StackSys, 10), client)
 		go sendGauge(url+"Sys/"+strconv.FormatUint(m.Sys, 10), client)
 		go sendGauge(url+"TotalAlloc/"+strconv.FormatUint(m.TotalAlloc, 10), client)
+		RandomValue = rand.Float64()
 		go sendGauge(url+"RandomValue/"+strconv.FormatFloat(RandomValue, 'f', -1, 64), client)
 
 		resp, _ := client.Post("http://127.0.0.1:8080/update/counter/PollCount/1", "text/plain", nil)
