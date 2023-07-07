@@ -61,5 +61,6 @@ func PullMetrics(m *runtime.MemStats) {
 
 func sendGauge(uri string, client http.Client) (*http.Response, error) {
 	resp, err := client.Post(uri, "text/plain", nil)
+	resp.Body.Close()
 	return resp, err
 }
