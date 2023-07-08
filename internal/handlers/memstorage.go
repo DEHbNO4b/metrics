@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -21,7 +20,7 @@ func NewMemStorage() *MemStorage {
 
 func (ms *MemStorage) SetMetrics(w http.ResponseWriter, req *http.Request) {
 	url, _ := strings.CutPrefix(req.URL.Path, "/update/")
-	fmt.Println(url)
+	// fmt.Println(url)
 	urlValues := strings.Split(url, "/")
 
 	switch urlValues[0] {

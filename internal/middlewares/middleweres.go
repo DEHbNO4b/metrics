@@ -30,8 +30,6 @@ func IsRightRequest(next http.Handler) http.Handler {
 		url := r.URL.Path
 		url, _ = strings.CutPrefix(url, "/update/")
 		urlValues := strings.Split(url, "/")
-		fmt.Println(urlValues)
-		fmt.Println(len(urlValues))
 		if len(urlValues) < 3 {
 			http.Error(w, "bad request", http.StatusNotFound)
 			return
