@@ -1,12 +1,14 @@
 package handlers
 
 import (
+	"io"
 	"net/http"
 	"strconv"
 	"strings"
 
 	"github.com/DEHbNO4b/metrics/internal/data"
 	"github.com/DEHbNO4b/metrics/internal/interfaces"
+	"github.com/go-chi/chi/v5"
 )
 
 type Metrics struct {
@@ -24,8 +26,24 @@ func NewMetrics(m interfaces.MetricsStorage) Metrics {
 
 func (ms *Metrics) SetMetrics(w http.ResponseWriter, req *http.Request) {
 	url, _ := strings.CutPrefix(req.URL.Path, "/update/")
-	// fmt.Println(url)
 	urlValues := strings.Split(url, "/")
+	if len(urlValues) < 3 {
+		http.Error(w, "bad request", http.StatusNotFound)
+		return
+	}
+	if urlValues[0] == "" {
+		http.Error(w, "bad request", http.StatusNotFound)
+		return
+	}
+	if urlValues[1] == "" {
+		http.Error(w, "bad request", http.StatusNotFound)
+		return
+	}
+	if urlValues[0] != "counter" && urlValues[0] != "gauge" {
+		http.Error(w, "bad request", http.StatusBadRequest)
+		return
+	}
+	// fmt.Println(url)
 
 	switch urlValues[0] {
 	case "gauge":
@@ -58,7 +76,7 @@ func (ms *Metrics) SetCounter(w http.ResponseWriter, req *http.Request) {
 
 	url, _ := strings.CutPrefix(req.URL.Path, "/update/counter/")
 	urlValues := strings.Split(url, "/")
-	val, err := strconv.Atoi(urlValues[1])
+	val, err := strconv.ParseInt(urlValues[1], 10, 64)
 	if err != nil {
 		http.Error(w, "wrong metric value", http.StatusBadRequest)
 		return
@@ -68,4 +86,44 @@ func (ms *Metrics) SetCounter(w http.ResponseWriter, req *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(""))
 
+}
+func (m *Metrics) GetMetrics(w http.ResponseWriter, r *http.Request) {
+
+	//m.MemStorage.SetGauge(data.Gauge{Name: "qwe", Val: 234234})
+	const formbegin = `<html>
+    <head>
+    <title></title>
+    </head>
+    <body>
+	`
+	const formend = `
+	</body>
+</html>`
+	metrics := m.MemStorage.GetMetrics()
+
+	io.WriteString(w, formbegin)
+	io.WriteString(w, strings.Join(metrics, ", "))
+	io.WriteString(w, formend)
+}
+func (m *Metrics) GetMetric(w http.ResponseWriter, r *http.Request) {
+	t := chi.URLParam(r, "type")
+	name := chi.URLParam(r, "name")
+	var data string = ""
+	switch t {
+	case "gauge":
+		g, err := m.MemStorage.GetGauge(name)
+		if err != nil {
+			http.Error(w, "", http.StatusNotFound)
+		}
+		data = strconv.FormatFloat(g.Val, 'f', -1, 64)
+	case "counter":
+		c, err := m.MemStorage.GetCounter(name)
+		if err != nil {
+			http.Error(w, "", http.StatusNotFound)
+		}
+		data = strconv.FormatInt(c.Val, 10)
+	default:
+		http.Error(w, "", http.StatusBadRequest)
+	}
+	w.Write([]byte(data))
 }
