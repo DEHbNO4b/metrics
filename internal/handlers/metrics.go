@@ -105,19 +105,19 @@ func (m *Metrics) GetMetrics(w http.ResponseWriter, r *http.Request) {
 	io.WriteString(w, strings.Join(metrics, ", "))
 	io.WriteString(w, formend)
 }
-func (m *Metrics) GetMetric(w http.ResponseWriter, r *http.Request) {
+func (ms *Metrics) GetMetric(w http.ResponseWriter, r *http.Request) {
 	t := chi.URLParam(r, "type")
 	name := chi.URLParam(r, "name")
-	var data string = ""
+	data := ""
 	switch t {
 	case "gauge":
-		g, err := m.MemStorage.GetGauge(name)
+		g, err := ms.MemStorage.GetGauge(name)
 		if err != nil {
 			http.Error(w, "", http.StatusNotFound)
 		}
 		data = strconv.FormatFloat(g.Val, 'f', -1, 64)
 	case "counter":
-		c, err := m.MemStorage.GetCounter(name)
+		c, err := ms.MemStorage.GetCounter(name)
 		if err != nil {
 			http.Error(w, "", http.StatusNotFound)
 		}
