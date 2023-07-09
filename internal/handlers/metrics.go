@@ -87,7 +87,7 @@ func (ms *Metrics) SetCounter(w http.ResponseWriter, req *http.Request) {
 	w.Write([]byte(""))
 
 }
-func (m *Metrics) GetMetrics(w http.ResponseWriter, r *http.Request) {
+func (ms *Metrics) GetMetrics(w http.ResponseWriter, r *http.Request) {
 
 	//m.MemStorage.SetGauge(data.Gauge{Name: "qwe", Val: 234234})
 	const formbegin = `<html>
@@ -99,7 +99,7 @@ func (m *Metrics) GetMetrics(w http.ResponseWriter, r *http.Request) {
 	const formend = `
 	</body>
 </html>`
-	metrics := m.MemStorage.GetMetrics()
+	metrics := ms.MemStorage.GetMetrics()
 
 	io.WriteString(w, formbegin)
 	io.WriteString(w, strings.Join(metrics, ", "))
