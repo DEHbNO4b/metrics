@@ -5,11 +5,13 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/DEHbNO4b/metrics/internal/data"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestMemStorage_SetMetrics(t *testing.T) {
-	memSt := NewMemStorage()
+func TestMetrics_SetMetrics(t *testing.T) {
+	store := data.MetStore{}
+	memSt := NewMetrics(&store)
 
 	type want struct {
 		statusCode  int
@@ -19,12 +21,12 @@ func TestMemStorage_SetMetrics(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		ms      *MemStorage
+		ms      *Metrics
 		request string
 		want    want
 	}{
 		{
-			ms:      memSt,
+			ms:      &memSt,
 			name:    "positive test #1",
 			request: "/update/something/somemetric/300",
 			want: want{
@@ -44,9 +46,9 @@ func TestMemStorage_SetMetrics(t *testing.T) {
 	}
 }
 
-func TestMemStorage_SetGauge(t *testing.T) {
-
-	memSt := NewMemStorage()
+func TestMetrics_SetGauge(t *testing.T) {
+	store := data.NewMetStore()
+	memSt := NewMetrics(store)
 
 	type want struct {
 		statusCode  int
@@ -56,12 +58,12 @@ func TestMemStorage_SetGauge(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		ms      *MemStorage
+		ms      *Metrics
 		request string
 		want    want
 	}{
 		{
-			ms:      memSt,
+			ms:      &memSt,
 			name:    "positive test ",
 			request: "/update/gauge/somemetric/300",
 			want: want{
@@ -69,7 +71,7 @@ func TestMemStorage_SetGauge(t *testing.T) {
 			},
 		},
 		{
-			ms:      memSt,
+			ms:      &memSt,
 			name:    "negative test ",
 			request: "/update/gauge/somemetric/k",
 			want: want{
@@ -77,7 +79,7 @@ func TestMemStorage_SetGauge(t *testing.T) {
 			},
 		},
 		{
-			ms:      memSt,
+			ms:      &memSt,
 			name:    "zero test",
 			request: "/update/gauge/somemetric/0",
 			want: want{
@@ -85,7 +87,7 @@ func TestMemStorage_SetGauge(t *testing.T) {
 			},
 		},
 		{
-			ms:      memSt,
+			ms:      &memSt,
 			name:    "big number ",
 			request: "/update/gauge/somemetric/9845649.8816513",
 			want: want{
@@ -93,7 +95,7 @@ func TestMemStorage_SetGauge(t *testing.T) {
 			},
 		},
 		{
-			ms:      memSt,
+			ms:      &memSt,
 			name:    "big negative number ",
 			request: "/update/gauge/somemetric/-9845649.8816513",
 			want: want{
@@ -113,8 +115,9 @@ func TestMemStorage_SetGauge(t *testing.T) {
 	}
 }
 
-func TestMemStorage_SetCounter(t *testing.T) {
-	memSt := NewMemStorage()
+func TestMetrics_SetCounter(t *testing.T) {
+	store := data.NewMetStore()
+	memSt := NewMetrics(store)
 
 	type want struct {
 		statusCode  int
@@ -124,12 +127,12 @@ func TestMemStorage_SetCounter(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		ms      *MemStorage
+		ms      *Metrics
 		request string
 		want    want
 	}{
 		{
-			ms:      memSt,
+			ms:      &memSt,
 			name:    "positive test ",
 			request: "/update/counter/somemetric/3500",
 			want: want{
@@ -137,7 +140,7 @@ func TestMemStorage_SetCounter(t *testing.T) {
 			},
 		},
 		{
-			ms:      memSt,
+			ms:      &memSt,
 			name:    "negative test ",
 			request: "/update/counter/somemetric/k",
 			want: want{
@@ -145,7 +148,7 @@ func TestMemStorage_SetCounter(t *testing.T) {
 			},
 		},
 		{
-			ms:      memSt,
+			ms:      &memSt,
 			name:    "zero test ",
 			request: "/update/counter/somemetric/0",
 			want: want{
@@ -153,7 +156,7 @@ func TestMemStorage_SetCounter(t *testing.T) {
 			},
 		},
 		{
-			ms:      memSt,
+			ms:      &memSt,
 			name:    "big number ",
 			request: "/update/counter/somemetric/98456498816513",
 			want: want{
@@ -161,7 +164,7 @@ func TestMemStorage_SetCounter(t *testing.T) {
 			},
 		},
 		{
-			ms:      memSt,
+			ms:      &memSt,
 			name:    "big negative number ",
 			request: "/update/counter/somemetric/-98456498816513",
 			want: want{
