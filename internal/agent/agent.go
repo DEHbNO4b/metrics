@@ -11,6 +11,7 @@ import (
 
 func ReadRuntimeMetrics(m *runtime.MemStats, interval int) {
 	var pollInterval = time.Duration(interval) * time.Second
+
 	var lock sync.Mutex
 	for {
 		lock.Lock()
@@ -20,12 +21,14 @@ func ReadRuntimeMetrics(m *runtime.MemStats, interval int) {
 	}
 
 }
+
 func PullMetrics(m *runtime.MemStats, interval int, endpoint string) {
 	var reportInterval = time.Duration(interval) * time.Second
 
 	url := "http://" + endpoint
 	urlUpdateGauge := url + "/update/gauge/"
 	urlUpdateCounter := url + "/update/counter/"
+
 	client := http.Client{Timeout: 1000 * time.Millisecond}
 	var RandomValue float64
 	for {
@@ -60,7 +63,6 @@ func PullMetrics(m *runtime.MemStats, interval int, endpoint string) {
 
 		RandomValue = rand.Float64()
 		go sendMetric(urlUpdateGauge+"RandomValue/"+strconv.FormatFloat(RandomValue, 'f', -1, 64), client)
-
 		go sendMetric(urlUpdateCounter+"PollCount/1", client)
 
 		time.Sleep(reportInterval)
@@ -73,6 +75,7 @@ func sendMetric(uri string, client http.Client) error {
 	if err != nil {
 		return err
 	}
+
 	resp.Body.Close()
 	return nil
 }
