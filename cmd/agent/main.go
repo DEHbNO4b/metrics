@@ -8,10 +8,11 @@ import (
 )
 
 func main() {
+	parseFlag()
 	var m runtime.MemStats
 
-	go agent.ReadRuntimeMetrics(&m)
-	go agent.PullMetrics(&m)
+	go agent.ReadRuntimeMetrics(&m, pollInterval)
+	go agent.PullMetrics(&m, reportInterval)
 	wg := sync.WaitGroup{}
 	wg.Add(1)
 	wg.Wait()

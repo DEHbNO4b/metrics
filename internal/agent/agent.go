@@ -10,10 +10,8 @@ import (
 	"time"
 )
 
-var pollInterval = 2 * time.Second
-var reportInterval = 10 * time.Second
-
-func ReadRuntimeMetrics(m *runtime.MemStats) {
+func ReadRuntimeMetrics(m *runtime.MemStats, interval int) {
+	var pollInterval = time.Duration(interval) * time.Second
 	var lock sync.Mutex
 	for {
 		lock.Lock()
@@ -23,7 +21,8 @@ func ReadRuntimeMetrics(m *runtime.MemStats) {
 	}
 
 }
-func PullMetrics(m *runtime.MemStats) {
+func PullMetrics(m *runtime.MemStats, interval int) {
+	var reportInterval = time.Duration(interval) * time.Second
 	url := "http://localhost:8080/update/gauge/"
 	client := http.Client{Timeout: 1000 * time.Millisecond}
 	var RandomValue float64
