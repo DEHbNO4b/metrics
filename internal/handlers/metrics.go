@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"io"
 	"net/http"
 	"strconv"
@@ -25,6 +26,7 @@ func NewMetrics(m interfaces.MetricsStorage) Metrics {
 }
 
 func (ms *Metrics) SetMetrics(w http.ResponseWriter, req *http.Request) {
+	fmt.Println(req.URL.Path)
 	url, _ := strings.CutPrefix(req.URL.Path, "/update/")
 	urlValues := strings.Split(url, "/")
 	if len(urlValues) < 3 {
