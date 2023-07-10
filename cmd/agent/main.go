@@ -7,20 +7,15 @@ import (
 	"github.com/DEHbNO4b/metrics/internal/agent"
 )
 
-type gauge struct {
-	name string
-	val  float64
-}
-type counter struct {
-	name string
-	val  int
-}
+var repInterval int = 10
+var pInterval int = 2
+var adress string = "localhost:8080"
 
 func main() {
 	var m runtime.MemStats
 
-	go agent.ReadRuntimeMetrics(&m)
-	go agent.PullMetrics(&m)
+	go agent.ReadRuntimeMetrics(&m, pInterval)
+	go agent.PullMetrics(&m, repInterval, adress)
 	wg := sync.WaitGroup{}
 	wg.Add(1)
 	wg.Wait()
