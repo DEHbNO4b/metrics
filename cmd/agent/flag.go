@@ -15,7 +15,8 @@ func parseFlag() {
 	flag.IntVar(&reportInterval, "r", 10, "report interval")
 	flag.IntVar(&pollInterval, "p", 2, "poll interval")
 	flag.Parse()
-	if ep := os.Getenv("ADRESS"); ep != "" {
+
+	if ep := os.Getenv("ADDRESS"); ep != "" {
 		endpoint = ep
 	}
 	if ri := os.Getenv("REPORT_INTERVAL"); ri != "" {
@@ -25,7 +26,7 @@ func parseFlag() {
 		}
 
 	}
-	if pi := os.Getenv("ADRESS"); pi != "" {
+	if pi := os.Getenv("POLL_INTERVAL"); pi != "" {
 		pInt, err := strconv.Atoi(pi)
 		if err != nil {
 			pollInterval = pInt
