@@ -14,13 +14,9 @@ import (
 
 type Metrics struct {
 	MemStorage interfaces.MetricsStorage
-	// gauge   map[string]float64
-	// counter map[string]int
 }
 
 func NewMetrics(m interfaces.MetricsStorage) Metrics {
-	// g := make(map[string]float64)
-	// c := make(map[string]int)
 	ms := Metrics{MemStorage: m}
 	return ms
 }
@@ -30,22 +26,21 @@ func (ms *Metrics) SetMetrics(w http.ResponseWriter, req *http.Request) {
 	url, _ := strings.CutPrefix(req.URL.Path, "/update/")
 	urlValues := strings.Split(url, "/")
 	if len(urlValues) < 3 {
-		http.Error(w, "bad request", http.StatusNotFound)
+		http.Error(w, "", http.StatusNotFound)
 		return
 	}
 	if urlValues[0] == "" {
-		http.Error(w, "bad request", http.StatusNotFound)
+		http.Error(w, "", http.StatusNotFound)
 		return
 	}
 	if urlValues[1] == "" {
-		http.Error(w, "bad request", http.StatusNotFound)
+		http.Error(w, "", http.StatusNotFound)
 		return
 	}
 	if urlValues[0] != "counter" && urlValues[0] != "gauge" {
-		http.Error(w, "bad request", http.StatusBadRequest)
+		http.Error(w, "Bad request", http.StatusBadRequest)
 		return
 	}
-	// fmt.Println(url)
 
 	switch urlValues[0] {
 	case "gauge":
@@ -54,7 +49,7 @@ func (ms *Metrics) SetMetrics(w http.ResponseWriter, req *http.Request) {
 		ms.SetCounter(w, req)
 	default:
 		{
-			http.Error(w, "wrong metric value", http.StatusBadRequest)
+			http.Error(w, "Wrong metric type", http.StatusBadRequest)
 			return
 		}
 	}
@@ -93,14 +88,14 @@ func (ms *Metrics) GetMetrics(w http.ResponseWriter, r *http.Request) {
 
 	//m.MemStorage.SetGauge(data.Gauge{Name: "qwe", Val: 234234})
 	const formbegin = `<html>
-    <head>
-    <title></title>
-    </head>
-    <body>
-	`
+			<head>
+				<title></title>
+			</head>
+				<body>
+			`
 	const formend = `
-	</body>
-</html>`
+				</body>
+			</html>`
 	metrics := ms.MemStorage.GetMetrics()
 
 	io.WriteString(w, formbegin)

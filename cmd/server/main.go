@@ -13,8 +13,6 @@ func main() {
 	r := chi.NewRouter()
 	ms := data.NewMetStore()
 	mh := handlers.NewMetrics(ms)
-	// serv := http.NewServeMux()
-	// serv.Handle(`/update/`, middlewares.Conveyor(http.HandlerFunc(mh.SetMetrics), middlewares.IsRightRequest, middlewares.IsPostReq))
 	r.Post(`/update/{type}/{name}/{value}`, http.HandlerFunc(mh.SetMetrics))
 	r.Get(`/value/{type}/{name}`, http.HandlerFunc(mh.GetMetric))
 	r.Get(`/`, mh.GetMetrics)

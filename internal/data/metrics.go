@@ -53,14 +53,19 @@ func (ms *MetStore) SetGauge(g Gauge) error {
 	return nil
 }
 func (ms *MetStore) SetCounter(c Counter) error {
-
+	lock := sync.Mutex{}
+	lock.Lock()
 	ms.Counters[c.Name] = ms.Counters[c.Name] + c.Val
+	lock.Unlock()
 	return nil
 }
 func (ms *MetStore) GetGauge(name string) (Gauge, error) {
+	lock := sync.RWMutex{}
 	g := Gauge{}
 	g.Name = name
+	lock.RLock()
 	v, ok := ms.Gauges[name]
+	lock.RUnlock()
 	if !ok {
 		return g, errors.New("not contains this metric")
 	}
@@ -70,7 +75,10 @@ func (ms *MetStore) GetGauge(name string) (Gauge, error) {
 func (ms *MetStore) GetCounter(name string) (Counter, error) {
 	c := Counter{}
 	c.Name = name
+	lock := sync.RWMutex{}
+	lock.RLock()
 	v, ok := ms.Counters[name]
+	lock.RUnlock()
 	if !ok {
 		return c, errors.New("not contains this metric")
 	}

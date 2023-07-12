@@ -5,17 +5,13 @@ import (
 	"net/http"
 	"runtime"
 	"strconv"
-	"sync"
 	"time"
 )
 
 func ReadRuntimeMetrics(m *runtime.MemStats, interval int) {
 	var pollInterval = time.Duration(interval) * time.Second
-	var lock sync.Mutex
 	for {
-		lock.Lock()
 		runtime.ReadMemStats(m)
-		lock.Unlock()
 		time.Sleep(pollInterval)
 	}
 
