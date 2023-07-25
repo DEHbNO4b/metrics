@@ -57,7 +57,7 @@ func (ms *Metrics) SetMetrics(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
-func (ms *Metrics) SetMetricsJson(w http.ResponseWriter, req *http.Request) {
+func (ms *Metrics) SetMetricsJSON(w http.ResponseWriter, req *http.Request) {
 	// fmt.Println("in set metrics")
 	m := data.Metrics{}
 	dec := json.NewDecoder(req.Body)
@@ -125,7 +125,7 @@ func (ms *Metrics) GetMetrics(w http.ResponseWriter, r *http.Request) {
 	io.WriteString(w, strings.Join(metrics, ", "))
 	io.WriteString(w, formend)
 }
-func (ms *Metrics) GetMetricJson(w http.ResponseWriter, r *http.Request) {
+func (ms *Metrics) GetMetricJSON(w http.ResponseWriter, r *http.Request) {
 	m := data.Metrics{}
 	dec := json.NewDecoder(r.Body)
 	dec.Decode(&m)
