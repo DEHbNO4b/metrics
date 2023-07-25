@@ -10,6 +10,7 @@ import (
 	"github.com/DEHbNO4b/metrics/internal/data"
 	"github.com/DEHbNO4b/metrics/internal/interfaces"
 	logger "github.com/DEHbNO4b/metrics/internal/loger"
+	"github.com/go-chi/chi/v5"
 	"go.uber.org/zap"
 )
 
@@ -23,6 +24,40 @@ func NewMetrics(m interfaces.MetricsStorage) Metrics {
 }
 
 func (ms *Metrics) SetMetrics(w http.ResponseWriter, req *http.Request) {
+	// fmt.Println(req.URL.Path)
+	url, _ := strings.CutPrefix(req.URL.Path, "/update/")
+	urlValues := strings.Split(url, "/")
+	if len(urlValues) < 3 {
+		http.Error(w, "", http.StatusNotFound)
+		return
+	}
+	if urlValues[0] == "" {
+		http.Error(w, "", http.StatusNotFound)
+		return
+	}
+	if urlValues[1] == "" {
+		http.Error(w, "", http.StatusNotFound)
+		return
+	}
+	if urlValues[0] != "counter" && urlValues[0] != "gauge" {
+		http.Error(w, "Bad request", http.StatusBadRequest)
+		return
+	}
+
+	switch urlValues[0] {
+	case "gauge":
+		ms.SetGauge(w, req)
+	case "counter":
+		ms.SetCounter(w, req)
+	default:
+		{
+			http.Error(w, "Wrong metric type", http.StatusBadRequest)
+			return
+		}
+	}
+}
+
+func (ms *Metrics) SetMetricsJson(w http.ResponseWriter, req *http.Request) {
 	// fmt.Println("in set metrics")
 	m := data.Metrics{}
 	dec := json.NewDecoder(req.Body)
@@ -90,7 +125,7 @@ func (ms *Metrics) GetMetrics(w http.ResponseWriter, r *http.Request) {
 	io.WriteString(w, strings.Join(metrics, ", "))
 	io.WriteString(w, formend)
 }
-func (ms *Metrics) GetMetric(w http.ResponseWriter, r *http.Request) {
+func (ms *Metrics) GetMetricJson(w http.ResponseWriter, r *http.Request) {
 	m := data.Metrics{}
 	dec := json.NewDecoder(r.Body)
 	dec.Decode(&m)
@@ -115,4 +150,26 @@ func (ms *Metrics) GetMetric(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	enc := json.NewEncoder(w)
 	enc.Encode(&m)
+}
+func (ms *Metrics) GetMetric(w http.ResponseWriter, r *http.Request) {
+	t := chi.URLParam(r, "type")
+	name := chi.URLParam(r, "name")
+	data := ""
+	switch t {
+	case "gauge":
+		g, err := ms.MemStorage.GetGauge(name)
+		if err != nil {
+			http.Error(w, "", http.StatusNotFound)
+		}
+		data = strconv.FormatFloat(g.Val, 'f', -1, 64)
+	case "counter":
+		c, err := ms.MemStorage.GetCounter(name)
+		if err != nil {
+			http.Error(w, "", http.StatusNotFound)
+		}
+		data = strconv.FormatInt(c.Val, 10)
+	default:
+		http.Error(w, "", http.StatusBadRequest)
+	}
+	w.Write([]byte(data))
 }
