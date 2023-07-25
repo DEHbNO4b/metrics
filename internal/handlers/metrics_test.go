@@ -14,9 +14,9 @@ func TestMetrics_SetMetrics(t *testing.T) {
 	memSt := NewMetrics(&store)
 
 	type want struct {
-		statusCode  int
-		response    string
-		contentType string
+		statusCode int
+		// response    string
+		// contentType string
 	}
 
 	tests := []struct {
@@ -28,7 +28,7 @@ func TestMetrics_SetMetrics(t *testing.T) {
 		{
 			ms:      &memSt,
 			name:    "positive test #1",
-			request: "/update/something/somemetric/300",
+			request: "/update/",
 			want: want{
 				statusCode: 400,
 			},
@@ -51,9 +51,9 @@ func TestMetrics_SetGauge(t *testing.T) {
 	memSt := NewMetrics(store)
 
 	type want struct {
-		statusCode  int
-		response    string
-		contentType string
+		statusCode int
+		// response    string
+		// contentType string
 	}
 
 	tests := []struct {
@@ -120,9 +120,9 @@ func TestMetrics_SetCounter(t *testing.T) {
 	memSt := NewMetrics(store)
 
 	type want struct {
-		statusCode  int
-		response    string
-		contentType string
+		statusCode int
+		// response    string
+		// contentType string
 	}
 
 	tests := []struct {

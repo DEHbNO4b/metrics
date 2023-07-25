@@ -19,6 +19,7 @@ type Counter struct {
 type MetStore struct {
 	Gauges   map[string]float64
 	Counters map[string]int64
+	sync.RWMutex
 }
 
 func NewMetStore() *MetStore {
@@ -38,26 +39,24 @@ func (ms *MetStore) GetMetrics() []string {
 	return m
 }
 func (ms *MetStore) SetGauge(g Gauge) error {
-	lock := sync.Mutex{}
-	lock.Lock()
+	// lock := sync.Mutex{}
+	ms.Lock()
 	ms.Gauges[g.Name] = g.Val
-	lock.Unlock()
+	ms.Unlock()
 	return nil
 }
 func (ms *MetStore) SetCounter(c Counter) error {
-	lock := sync.Mutex{}
-	lock.Lock()
+	ms.Lock()
 	ms.Counters[c.Name] = ms.Counters[c.Name] + c.Val
-	lock.Unlock()
+	ms.Unlock()
 	return nil
 }
 func (ms *MetStore) GetGauge(name string) (Gauge, error) {
-	lock := sync.RWMutex{}
 	g := Gauge{}
 	g.Name = name
-	lock.RLock()
+	ms.RLock()
 	v, ok := ms.Gauges[name]
-	lock.RUnlock()
+	ms.RUnlock()
 	if !ok {
 		return g, errors.New("not contains this metric")
 	}
@@ -67,10 +66,9 @@ func (ms *MetStore) GetGauge(name string) (Gauge, error) {
 func (ms *MetStore) GetCounter(name string) (Counter, error) {
 	c := Counter{}
 	c.Name = name
-	lock := sync.RWMutex{}
-	lock.RLock()
+	ms.RLock()
 	v, ok := ms.Counters[name]
-	lock.RUnlock()
+	ms.RUnlock()
 	if !ok {
 		return c, errors.New("not contains this metric")
 	}
