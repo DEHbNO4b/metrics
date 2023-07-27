@@ -28,6 +28,21 @@ func NewMetStore() *MetStore {
 	ms := MetStore{Gauges: g, Counters: c}
 	return &ms
 }
+func (ms *MetStore) SetMetric(metric Metrics) error {
+	switch metric.MType {
+	case "gauge":
+		ms.Lock()
+		ms.Gauges[metric.ID] = *metric.Value
+		ms.Unlock()
+	case "counter":
+		ms.Lock()
+		ms.Counters[metric.ID] = ms.Counters[metric.ID] + *metric.Delta
+		ms.Unlock()
+	default:
+		return errors.New("wrong metric type")
+	}
+	return nil
+}
 func (ms *MetStore) GetMetrics() []string {
 	m := make([]string, 0, 20)
 	for name, val := range ms.Gauges {

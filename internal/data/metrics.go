@@ -7,6 +7,12 @@ type Metrics struct {
 	Value *float64 `json:"value,omitempty"` // значение метрики в случае передачи gauge
 }
 
+func NewMetric() Metrics {
+	var delta int64 = 0
+	var value float64 = 0
+	return Metrics{Delta: &delta, Value: &value}
+}
+
 var gauges = []Metrics{
 	{
 		ID:    "Alloc",
@@ -114,6 +120,10 @@ var gauges = []Metrics{
 	},
 	{
 		ID:    "TotalAlloc",
+		MType: "gauge",
+	},
+	{
+		ID:    "RandomValue",
 		MType: "gauge",
 	},
 }

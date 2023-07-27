@@ -38,7 +38,7 @@ func TestMetrics_SetMetrics(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			req := httptest.NewRequest(http.MethodPost, tt.request, nil)
 			w := httptest.NewRecorder()
-			tt.ms.SetGauge(w, req)
+			tt.ms.SetGaugeURL(w, req)
 			result := w.Result()
 			result.Body.Close()
 			assert.Equal(t, tt.want.statusCode, result.StatusCode)
@@ -107,7 +107,7 @@ func TestMetrics_SetGauge(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			req := httptest.NewRequest(http.MethodPost, tt.request, nil)
 			w := httptest.NewRecorder()
-			tt.ms.SetGauge(w, req)
+			tt.ms.SetGaugeURL(w, req)
 			result := w.Result()
 			result.Body.Close()
 			assert.Equal(t, tt.want.statusCode, result.StatusCode)
@@ -176,7 +176,7 @@ func TestMetrics_SetCounter(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			req := httptest.NewRequest(http.MethodPost, tt.request, nil)
 			w := httptest.NewRecorder()
-			tt.ms.SetCounter(w, req)
+			tt.ms.SetCounterURL(w, req)
 			result := w.Result()
 			result.Body.Close()
 			assert.Equal(t, tt.want.statusCode, result.StatusCode)

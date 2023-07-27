@@ -70,27 +70,21 @@ func (a Agent) ReadRuntimeMetrics(interval int) {
 	var pollInterval = time.Duration(interval) * time.Second
 	for {
 		runtime.ReadMemStats(a.m)
-		fmt.Println(a.m.Alloc)
 		time.Sleep(pollInterval)
 	}
 
 }
 func (a Agent) PullMetrics(interval int) {
 	var reportInterval = time.Duration(interval) * time.Second
-
 	for {
 		for _, el := range a.gauges {
 			reader, ok := metricReaders[el.ID]
 			if !ok {
-				logger.Log.Error("don have metric with that name", zap.String("name", el.ID))
+				logger.Log.Error("dont have metric with that name", zap.String("name", el.ID))
 			}
-			fl := reader(a.m)
-			el.Value = &fl
-
-			err := a.sendMetric(el)
-			if err != nil {
-				logger.Log.Error("can't send metric", zap.String("err: ", err.Error()))
-			}
+			val := reader(a.m)
+			el.Value = &val
+			go a.sendMetric(el)
 		}
 		d := int64(1)
 		go a.sendMetric(data.Metrics{ID: "PollCount", MType: "counter", Delta: &d})
@@ -100,20 +94,19 @@ func (a Agent) PullMetrics(interval int) {
 
 }
 
-func (a Agent) sendMetric(m data.Metrics) error {
+func (a Agent) sendMetric(m data.Metrics) {
 	buf := bytes.Buffer{}
 	enc := json.NewEncoder(&buf)
 	err := enc.Encode(&m)
 	fmt.Println(buf.String())
 	if err != nil {
 		logger.Log.Info("unable to encode metric", zap.String("err: ", err.Error()))
-		return err
+		return
 	}
 	resp, err := a.client.Post(a.url+"/update/", "application/json", &buf)
-
 	if err != nil {
-		return err
+		logger.Log.Sugar().Error(err.Error())
+		return
 	}
 	resp.Body.Close()
-	return nil
 }
