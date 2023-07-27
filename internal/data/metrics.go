@@ -129,9 +129,6 @@ var gauges = []Metrics{
 }
 
 func NewGauges() []Metrics {
-	for _, el := range gauges {
-		var val float64 = 0
-		el.Value = &val
-	}
+
 	return gauges
 }
