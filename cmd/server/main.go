@@ -20,7 +20,7 @@ func main() {
 	ms := data.NewMetStore()
 	mh := handlers.NewMetrics(ms)
 	r.Use(middleware.WithLogging)
-	r.Post(`/update/{type}/{name}/{value}`, http.HandlerFunc(mh.SetMetrics))
+	r.Post(`/update/{type}/{name}/{value}`, http.HandlerFunc(mh.SetMetricsURL))
 	r.Post(`/update/`, http.HandlerFunc(mh.SetMetricsJSON))
 	r.Post(`/value/`, http.HandlerFunc(mh.GetMetricJSON))
 	r.Get(`/value/{type}/{name}`, http.HandlerFunc(mh.GetMetric))
