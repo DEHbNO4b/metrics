@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"strconv"
@@ -62,6 +63,7 @@ func (ms *Metrics) SetMetricsJSON(w http.ResponseWriter, req *http.Request) {
 	m := data.Metrics{}
 	dec := json.NewDecoder(req.Body)
 	err := dec.Decode(&m)
+	fmt.Printf("i got %#v\n", m)
 	if err != nil {
 		logger.Log.Info("unable to decode json", zap.String("err", err.Error()))
 	}
