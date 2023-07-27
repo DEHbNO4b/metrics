@@ -3,7 +3,6 @@ package agent
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"math/rand"
 	"net/http"
 	"runtime"
@@ -15,14 +14,8 @@ import (
 )
 
 var metricReaders = map[string]func(m *runtime.MemStats) float64{
-	"Alloc": func(m *runtime.MemStats) float64 {
-		fmt.Println(m.Alloc)
-		return float64(m.Alloc)
-	},
-	"BuckHashSys": func(m *runtime.MemStats) float64 {
-		fmt.Println(m.BuckHashSys)
-		return float64(m.BuckHashSys)
-	},
+	"Alloc":         func(m *runtime.MemStats) float64 { return float64(m.Alloc) },
+	"BuckHashSys":   func(m *runtime.MemStats) float64 { return float64(m.BuckHashSys) },
 	"Frees":         func(m *runtime.MemStats) float64 { return float64(m.Frees) },
 	"GCCPUFraction": func(m *runtime.MemStats) float64 { return float64(m.GCCPUFraction) },
 	"GCSys":         func(m *runtime.MemStats) float64 { return float64(m.GCSys) },
@@ -98,7 +91,6 @@ func (a Agent) sendMetric(m data.Metrics) {
 	buf := bytes.Buffer{}
 	enc := json.NewEncoder(&buf)
 	err := enc.Encode(&m)
-	fmt.Println(buf.String())
 	if err != nil {
 		logger.Log.Info("unable to encode metric", zap.String("err: ", err.Error()))
 		return
