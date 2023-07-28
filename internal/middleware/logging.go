@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"fmt"
 	"net/http"
 	"time"
 
@@ -51,13 +52,22 @@ func WithLogging(h http.Handler) http.Handler {
 
 		duration := time.Since(start)
 
-		logger.Log.Info("We got request",
+		// logger.Log.Info("We got request",
+		// 	zap.String("uri", r.RequestURI),
+		// 	zap.String("method", r.Method),
+		// 	zap.Int("status", responseData.status), // получаем перехваченный код статуса ответа
+		// 	zap.Duration("duration", duration),
+		// 	zap.Int("size", responseData.size), // получаем перехваченный размер ответа
+		// )
+		logger.Log.Sugar().Info(
 			zap.String("uri", r.RequestURI),
 			zap.String("method", r.Method),
 			zap.Int("status", responseData.status), // получаем перехваченный код статуса ответа
 			zap.Duration("duration", duration),
 			zap.Int("size", responseData.size), // получаем перехваченный размер ответа
+
 		)
+		fmt.Println(r.Header)
 	}
 	return http.HandlerFunc(logFn)
 }

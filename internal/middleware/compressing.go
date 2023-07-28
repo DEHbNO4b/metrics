@@ -30,7 +30,7 @@ func (w gzipWriter) Write(b []byte) (int, error) {
 }
 
 func GzipHandle(next http.Handler) http.Handler {
-	//&& isNeedToCompress(r.Header.Get("Accept"))
+	// && isNeedToCompress(r.Header.Values("Accept"))
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var nextWriter = w
