@@ -2,7 +2,6 @@ package middleware
 
 import (
 	"compress/gzip"
-	"fmt"
 	"io"
 	"net/http"
 	"strings"
@@ -10,10 +9,12 @@ import (
 
 var contentToCompress = []string{"application/json", "text/html"}
 
-func isNeedToCompress(s string) bool {
+func isNeedToCompress(s []string) bool {
 	for _, el := range contentToCompress {
-		if s == el {
-			return true
+		for _, val := range s {
+			if val == el {
+				return true
+			}
 		}
 	}
 	return false
@@ -32,10 +33,8 @@ func GzipHandle(next http.Handler) http.Handler {
 	//&& isNeedToCompress(r.Header.Get("Accept"))
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// fmt.Println("headers: ", r.Header)
 		var nextWriter = w
-		if strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") && isNeedToCompress(r.Header.Get("Accept")) {
-			fmt.Println("i find accept-encoding:gzip")
+		if strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") && isNeedToCompress(r.Header.Values("Accept")) {
 			gz, err := gzip.NewWriterLevel(w, gzip.BestCompression)
 			if err != nil {
 				io.WriteString(w, err.Error())
@@ -52,16 +51,8 @@ func GzipHandle(next http.Handler) http.Handler {
 				return
 			}
 			defer gzr.Close()
-
-			// b := bytes.Buffer{}
-			// buf := make([]byte, 30)
-			// gzr.Read(buf)
-			// b.ReadFrom(gzr)
-			// fmt.Println("buf: ", buf)
 			r.Body = gzr
-
 		}
-
 		next.ServeHTTP(nextWriter, r)
 	})
 }

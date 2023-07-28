@@ -70,15 +70,8 @@ func (ms *Metrics) GetMetricJSON(w http.ResponseWriter, r *http.Request) {
 func (ms *Metrics) GetMetrics(w http.ResponseWriter, r *http.Request) {
 
 	//m.MemStorage.SetGauge(data.Gauge{Name: "qwe", Val: 234234})
-	const formbegin = `<html>
-			<head>
-				<title></title>
-			</head>
-				<body>
-			`
-	const formend = `
-				</body>
-			</html>`
+	const formbegin = `<html><head><title></title></head><body>`
+	const formend = `</body></html>`
 	metrics := ms.MemStorage.GetMetrics()
 
 	io.WriteString(w, formbegin)

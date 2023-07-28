@@ -183,3 +183,22 @@ func TestMetrics_SetCounter(t *testing.T) {
 		})
 	}
 }
+
+func TestMetrics_SetMetricsJSON(t *testing.T) {
+	type args struct {
+		w   http.ResponseWriter
+		req *http.Request
+	}
+	tests := []struct {
+		name string
+		ms   *Metrics
+		args args
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.ms.SetMetricsJSON(tt.args.w, tt.args.req)
+		})
+	}
+}
