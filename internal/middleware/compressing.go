@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-var contentToCompress = []string{"application/json", "text/html"}
+var contentToCompress = []string{"application/json", "text/html", "html/text"}
 
 func isNeedToCompress(s []string) bool {
 	for _, el := range contentToCompress {
