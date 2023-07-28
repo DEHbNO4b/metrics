@@ -38,6 +38,7 @@ func (ms *Metrics) SetMetricsJSON(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, "Bad request", http.StatusBadRequest)
 		return
 	}
+
 	w.WriteHeader(http.StatusOK)
 }
 func (ms *Metrics) GetMetricJSON(w http.ResponseWriter, r *http.Request) {
@@ -73,7 +74,7 @@ func (ms *Metrics) GetMetrics(w http.ResponseWriter, r *http.Request) {
 	const formbegin = `<html><head><title></title></head><body>`
 	const formend = `</body></html>`
 	metrics := ms.MemStorage.GetMetrics()
-
+	w.Header().Set("Content-Type", "text/html")
 	io.WriteString(w, formbegin)
 	io.WriteString(w, strings.Join(metrics, ", "))
 	io.WriteString(w, formend)
