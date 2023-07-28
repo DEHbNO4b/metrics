@@ -2,6 +2,7 @@ package agent
 
 import (
 	"bytes"
+	"compress/gzip"
 	"encoding/json"
 	"net/http"
 	"runtime"
@@ -64,7 +65,29 @@ func (a Agent) sendMetric(m data.Metrics) {
 		logger.Log.Info("unable to encode metric", zap.String("err: ", err.Error()))
 		return
 	}
-	resp, err := a.client.Post(a.url+"/update/", "application/json", &buf)
+	compressed := bytes.Buffer{}
+	compressor, err := gzip.NewWriterLevel(&compressed, gzip.BestCompression)
+	if err != nil {
+		logger.Log.Sugar().Error(err.Error())
+		return
+	}
+	// fmt.Println(buf.Bytes())
+	compressor.Write(buf.Bytes())
+	compressor.Close()
+
+	req, err := http.NewRequest(http.MethodPost, a.url+"/update/", &compressed) // (1)
+	if err != nil {
+		logger.Log.Sugar().Error(err.Error())
+		return
+	}
+
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Accept", "application/json")
+	req.Header.Add("Content-encoding", "gzip")
+	req.Header.Add("Accept-encoding", "gzip")
+
+	// resp, err := a.client.Post(a.url+"/update/", "application/json", &b)
+	resp, err := a.client.Do(req)
 	if err != nil {
 		logger.Log.Sugar().Error(err.Error())
 		return

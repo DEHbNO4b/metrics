@@ -23,40 +23,6 @@ func NewMetrics(m interfaces.MetricsStorage) Metrics {
 	return ms
 }
 
-func (ms *Metrics) SetMetricsURL(w http.ResponseWriter, req *http.Request) {
-	// fmt.Println(req.URL.Path)
-	url, _ := strings.CutPrefix(req.URL.Path, "/update/")
-	urlValues := strings.Split(url, "/")
-	if len(urlValues) < 3 {
-		http.Error(w, "", http.StatusNotFound)
-		return
-	}
-	if urlValues[0] == "" {
-		http.Error(w, "", http.StatusNotFound)
-		return
-	}
-	if urlValues[1] == "" {
-		http.Error(w, "", http.StatusNotFound)
-		return
-	}
-	if urlValues[0] != "counter" && urlValues[0] != "gauge" {
-		http.Error(w, "Bad request", http.StatusBadRequest)
-		return
-	}
-
-	switch urlValues[0] {
-	case "gauge":
-		ms.SetGaugeURL(w, req)
-	case "counter":
-		ms.SetCounterURL(w, req)
-	default:
-		{
-			http.Error(w, "Wrong metric type", http.StatusBadRequest)
-			return
-		}
-	}
-}
-
 func (ms *Metrics) SetMetricsJSON(w http.ResponseWriter, req *http.Request) {
 	m := data.Metrics{}
 	dec := json.NewDecoder(req.Body)
@@ -100,6 +66,59 @@ func (ms *Metrics) GetMetricJSON(w http.ResponseWriter, r *http.Request) {
 	enc := json.NewEncoder(w)
 	enc.Encode(&m)
 }
+
+func (ms *Metrics) GetMetrics(w http.ResponseWriter, r *http.Request) {
+
+	//m.MemStorage.SetGauge(data.Gauge{Name: "qwe", Val: 234234})
+	const formbegin = `<html>
+			<head>
+				<title></title>
+			</head>
+				<body>
+			`
+	const formend = `
+				</body>
+			</html>`
+	metrics := ms.MemStorage.GetMetrics()
+
+	io.WriteString(w, formbegin)
+	io.WriteString(w, strings.Join(metrics, ", "))
+	io.WriteString(w, formend)
+}
+
+func (ms *Metrics) SetMetricsURL(w http.ResponseWriter, req *http.Request) {
+	// fmt.Println(req.URL.Path)
+	url, _ := strings.CutPrefix(req.URL.Path, "/update/")
+	urlValues := strings.Split(url, "/")
+	if len(urlValues) < 3 {
+		http.Error(w, "", http.StatusNotFound)
+		return
+	}
+	if urlValues[0] == "" {
+		http.Error(w, "", http.StatusNotFound)
+		return
+	}
+	if urlValues[1] == "" {
+		http.Error(w, "", http.StatusNotFound)
+		return
+	}
+	if urlValues[0] != "counter" && urlValues[0] != "gauge" {
+		http.Error(w, "Bad request", http.StatusBadRequest)
+		return
+	}
+
+	switch urlValues[0] {
+	case "gauge":
+		ms.SetGaugeURL(w, req)
+	case "counter":
+		ms.SetCounterURL(w, req)
+	default:
+		{
+			http.Error(w, "Wrong metric type", http.StatusBadRequest)
+			return
+		}
+	}
+}
 func (ms *Metrics) SetGaugeURL(w http.ResponseWriter, req *http.Request) {
 	url, _ := strings.CutPrefix(req.URL.Path, "/update/gauge/")
 	urlValues := strings.Split(url, "/")
@@ -129,26 +148,8 @@ func (ms *Metrics) SetCounterURL(w http.ResponseWriter, req *http.Request) {
 	w.Write([]byte(""))
 
 }
-func (ms *Metrics) GetMetrics(w http.ResponseWriter, r *http.Request) {
 
-	//m.MemStorage.SetGauge(data.Gauge{Name: "qwe", Val: 234234})
-	const formbegin = `<html>
-			<head>
-				<title></title>
-			</head>
-				<body>
-			`
-	const formend = `
-				</body>
-			</html>`
-	metrics := ms.MemStorage.GetMetrics()
-
-	io.WriteString(w, formbegin)
-	io.WriteString(w, strings.Join(metrics, ", "))
-	io.WriteString(w, formend)
-}
-
-func (ms *Metrics) GetMetric(w http.ResponseWriter, r *http.Request) {
+func (ms *Metrics) GetMetricURL(w http.ResponseWriter, r *http.Request) {
 	t := chi.URLParam(r, "type")
 	name := chi.URLParam(r, "name")
 	data := ""
