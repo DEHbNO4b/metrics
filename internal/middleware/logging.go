@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"fmt"
 	"net/http"
 	"time"
 
@@ -67,7 +66,6 @@ func WithLogging(h http.Handler) http.Handler {
 			zap.Int("size", responseData.size), // получаем перехваченный размер ответа
 
 		)
-		fmt.Println(r.Header)
 	}
 	return http.HandlerFunc(logFn)
 }
