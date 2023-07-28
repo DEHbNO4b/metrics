@@ -33,8 +33,8 @@ func GzipHandle(next http.Handler) http.Handler {
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// fmt.Println("headers: ", r.Header)
-		var nextWriter http.ResponseWriter = w
-		if strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
+		var nextWriter = w
+		if strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") && isNeedToCompress(r.Header.Get("Accept")) {
 			fmt.Println("i find accept-encoding:gzip")
 			gz, err := gzip.NewWriterLevel(w, gzip.BestCompression)
 			if err != nil {
