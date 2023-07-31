@@ -38,7 +38,6 @@ func (ms *Metrics) SetMetricsJSON(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, "Bad request", http.StatusBadRequest)
 		return
 	}
-
 	w.WriteHeader(http.StatusOK)
 }
 func (ms *Metrics) GetMetricJSON(w http.ResponseWriter, r *http.Request) {
@@ -69,8 +68,6 @@ func (ms *Metrics) GetMetricJSON(w http.ResponseWriter, r *http.Request) {
 }
 
 func (ms *Metrics) GetMetrics(w http.ResponseWriter, r *http.Request) {
-
-	//m.MemStorage.SetGauge(data.Gauge{Name: "qwe", Val: 234234})
 	const formbegin = `<html><head><title></title></head><body>`
 	const formend = `</body></html>`
 	metrics := ms.MemStorage.GetMetrics()
@@ -81,7 +78,6 @@ func (ms *Metrics) GetMetrics(w http.ResponseWriter, r *http.Request) {
 }
 
 func (ms *Metrics) SetMetricsURL(w http.ResponseWriter, req *http.Request) {
-	// fmt.Println(req.URL.Path)
 	url, _ := strings.CutPrefix(req.URL.Path, "/update/")
 	urlValues := strings.Split(url, "/")
 	if len(urlValues) < 3 {
@@ -137,7 +133,6 @@ func (ms *Metrics) SetCounterURL(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	ms.MemStorage.SetCounter(data.Counter{Name: urlValues[0], Val: val})
-	// w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(""))
 

@@ -48,16 +48,7 @@ func WithLogging(h http.Handler) http.Handler {
 			responseData:   responseData,
 		}
 		h.ServeHTTP(&lw, r) // внедряем реализацию http.ResponseWriter
-
 		duration := time.Since(start)
-
-		// logger.Log.Info("We got request",
-		// 	zap.String("uri", r.RequestURI),
-		// 	zap.String("method", r.Method),
-		// 	zap.Int("status", responseData.status), // получаем перехваченный код статуса ответа
-		// 	zap.Duration("duration", duration),
-		// 	zap.Int("size", responseData.size), // получаем перехваченный размер ответа
-		// )
 		logger.Log.Sugar().Info(
 			zap.String("uri", r.RequestURI),
 			zap.String("method", r.Method),

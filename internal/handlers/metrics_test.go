@@ -47,7 +47,7 @@ func TestMetrics_SetMetrics(t *testing.T) {
 }
 
 func TestMetrics_SetGauge(t *testing.T) {
-	store := data.NewMetStore()
+	store := data.NewMetStore(data.StoreConfig{})
 	memSt := NewMetrics(store)
 
 	type want struct {
@@ -116,7 +116,7 @@ func TestMetrics_SetGauge(t *testing.T) {
 }
 
 func TestMetrics_SetCounter(t *testing.T) {
-	store := data.NewMetStore()
+	store := data.NewMetStore(data.StoreConfig{})
 	memSt := NewMetrics(store)
 
 	type want struct {

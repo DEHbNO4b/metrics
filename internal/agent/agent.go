@@ -41,17 +41,10 @@ func (a Agent) PullMetrics(interval int) {
 	for {
 		for _, el := range a.gauges {
 			el.ReadValue(a.m)
-			// reader, ok := metricReaders[el.ID]
-			// if !ok {
-			// 	logger.Log.Error("dont have metric with that name", zap.String("name", el.ID))
-			// }
-			// val := reader(a.m)
-			// el.Value = &val
 			go a.sendMetric(el)
 		}
 		d := int64(1)
 		go a.sendMetric(data.Metrics{ID: "PollCount", MType: "counter", Delta: &d})
-
 		time.Sleep(reportInterval)
 	}
 
