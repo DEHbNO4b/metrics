@@ -20,17 +20,18 @@ func main() {
 	}
 	parseFlag()
 	router := chi.NewRouter()
-
-	var ms interfaces.MetricsStorage
+	postgresDB := maindb.NewPostgresDB(dsn)
+	defer postgresDB.DB.Close()
+	ms := data.NewMetStore(storeConfig)
+	defer ms.StoreData()
+	var store interfaces.MetricsStorage
 	if dsn != "" {
-		ms := maindb.NewPostgresDB(dsn)
-		defer ms.DB.Close()
+		store = postgresDB
 	} else {
-		ms := data.NewMetStore(storeConfig)
-		defer ms.StoreData()
+		store = ms
 	}
-	mhandler := handlers.NewMetrics(ms)
-	// mhandler.Pinger = postgresDB
+	mhandler := handlers.NewMetrics(store)
+	mhandler.Pinger = postgresDB
 	router.Use(middleware.WithLogging)
 	router.Use(middleware.GzipHandle)
 	router.Post(`/update/{type}/{name}/{value}`, http.HandlerFunc(mhandler.SetMetricsURL))
