@@ -4,7 +4,9 @@ import (
 	"flag"
 	"os"
 	"strconv"
+	"time"
 
+	"github.com/DEHbNO4b/metrics/internal/data"
 	logger "github.com/DEHbNO4b/metrics/internal/loger"
 )
 
@@ -13,8 +15,8 @@ var (
 	filestoragepath string
 	dsn             string
 	storeInterval   int
-
-	restore bool
+	restore         bool
+	storeConfig     data.StoreConfig
 )
 
 func parseFlag() {
@@ -49,5 +51,5 @@ func parseFlag() {
 		}
 		restore = re
 	}
-
+	storeConfig = data.StoreConfig{StoreInterval: time.Duration(storeInterval) * time.Second, Filepath: filestoragepath, Restore: restore}
 }
