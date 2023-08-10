@@ -21,13 +21,13 @@ func main() {
 	parseFlag()
 	router := chi.NewRouter()
 	storeConfig := data.StoreConfig{StoreInterval: time.Duration(storeInterval) * time.Second, Filepath: filestoragepath, Restore: restore}
-	metricsDb := maindb.NewMetricsDB(dsn)
-	metricsDb.Config = storeConfig
-	defer metricsDb.DB.Close()
+	metricsDB := maindb.NewMetricsDB(dsn)
+	metricsDB.Config = storeConfig
+	defer metricsDB.DB.Close()
 	ms := data.NewMetStore(storeConfig)
 	defer ms.StoreData()
 	mhandler := handlers.NewMetrics(ms)
-	mhandler.Pinger = metricsDb
+	mhandler.Pinger = metricsDB
 	router.Use(middleware.WithLogging)
 	router.Use(middleware.GzipHandle)
 	router.Post(`/update/{type}/{name}/{value}`, http.HandlerFunc(mhandler.SetMetricsURL))
@@ -35,7 +35,7 @@ func main() {
 	router.Post(`/update/`, http.HandlerFunc(mhandler.SetMetricsJSON))
 	router.Post(`/value/`, http.HandlerFunc(mhandler.GetMetricJSON))
 	router.Get(`/`, mhandler.GetMetrics)
-	router.Get(`/ping`, http.HandlerFunc(mhandler.PingDb))
+	router.Get(`/ping`, http.HandlerFunc(mhandler.PingDB))
 	logger.Log.Info("Running server", zap.String("address", runAddr))
 	err := http.ListenAndServe(runAddr, router)
 	if err != nil {
