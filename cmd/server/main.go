@@ -21,9 +21,9 @@ func main() {
 	parseFlag()
 	router := chi.NewRouter()
 	storeConfig := data.StoreConfig{StoreInterval: time.Duration(storeInterval) * time.Second, Filepath: filestoragepath, Restore: restore}
-	metricsDb := maindb.NewMetricsDb(dsn)
+	metricsDb := maindb.NewMetricsDB(dsn)
 	metricsDb.Config = storeConfig
-	defer metricsDb.Db.Close()
+	defer metricsDb.DB.Close()
 	ms := data.NewMetStore(storeConfig)
 	defer ms.StoreData()
 	mhandler := handlers.NewMetrics(ms)
