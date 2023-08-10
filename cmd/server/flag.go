@@ -38,7 +38,7 @@ func parseFlag() {
 	if fp := os.Getenv("FILE_STORAGE_PATH"); fp != "" {
 		filestoragepath = fp
 	}
-	if dbdsn := os.Getenv("DATABASE_DSN "); dbdsn != "" {
+	if dbdsn := os.Getenv("DATABASE_DSN"); dbdsn != "" {
 		dsn = dbdsn
 	}
 	if r := os.Getenv("RESTORE"); r != "" {
