@@ -23,7 +23,7 @@ func NewMetricsDB(dsn string) *MetricsDB {
 
 	db, err := sql.Open("pgx", dsn)
 	if err != nil {
-		logger.Log.Error("cannot open db", zap.Error(err))
+		logger.Log.Panic("cannot open db", zap.Error(err))
 		return nil
 	}
 	return &MetricsDB{DB: db}

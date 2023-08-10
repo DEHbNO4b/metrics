@@ -161,7 +161,7 @@ func (ms *Metrics) GetMetricURL(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Write([]byte(data))
 }
-func (ms *Metrics) PingDb(w http.ResponseWriter, r *http.Request) {
+func (ms *Metrics) PingDB(w http.ResponseWriter, r *http.Request) {
 	err := ms.Pinger.Ping()
 	if err != nil {
 		http.Error(w, "db disconeccted", http.StatusInternalServerError)
