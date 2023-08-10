@@ -75,7 +75,11 @@ func (mdb *PostgresDB) GetMetrics() []string {
 	}
 	defer rows.Close()
 	for rows.Next() {
-		rows.Scan(&id, &value)
+		err := rows.Scan(&id, &value)
+		if err != nil {
+			logger.Log.Error("unable to get metrics from db", zap.Error(err))
+			return nil
+		}
 		m = append(m, id+":"+strconv.FormatFloat(value, 'f', -1, 64))
 	}
 	rows, err = mdb.DB.Query(`SELECT id,delta from counters;`)
@@ -85,7 +89,11 @@ func (mdb *PostgresDB) GetMetrics() []string {
 	}
 	defer rows.Close()
 	for rows.Next() {
-		rows.Scan(&id, &delta)
+		err := rows.Scan(&id, &delta)
+		if err != nil {
+			logger.Log.Error("unable to get metrics from db", zap.Error(err))
+			return nil
+		}
 		m = append(m, id+":"+strconv.FormatInt(delta, 10))
 	}
 

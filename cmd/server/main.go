@@ -5,7 +5,6 @@ import (
 
 	"github.com/DEHbNO4b/metrics/internal/data"
 	"github.com/DEHbNO4b/metrics/internal/handlers"
-	"github.com/DEHbNO4b/metrics/internal/interfaces"
 	logger "github.com/DEHbNO4b/metrics/internal/loger"
 	"github.com/DEHbNO4b/metrics/internal/maindb"
 	"github.com/DEHbNO4b/metrics/internal/middleware"
@@ -20,17 +19,12 @@ func main() {
 	}
 	parseFlag()
 	router := chi.NewRouter()
+	// storeConfig := data.StoreConfig{StoreInterval: time.Duration(storeInterval) * time.Second, Filepath: filestoragepath, Restore: restore}
 	postgresDB := maindb.NewPostgresDB(dsn)
 	defer postgresDB.DB.Close()
 	ms := data.NewMetStore(storeConfig)
 	defer ms.StoreData()
-	var store interfaces.MetricsStorage
-	if dsn != "" {
-		store = postgresDB
-	} else {
-		store = ms
-	}
-	mhandler := handlers.NewMetrics(store)
+	mhandler := handlers.NewMetrics(ms)
 	mhandler.Pinger = postgresDB
 	router.Use(middleware.WithLogging)
 	router.Use(middleware.GzipHandle)
