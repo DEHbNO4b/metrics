@@ -14,9 +14,9 @@ func TestMetrics_SetMetrics(t *testing.T) {
 	memSt := NewMetrics(&store)
 
 	type want struct {
-		statusCode  int
-		response    string
-		contentType string
+		statusCode int
+		// response    string
+		// contentType string
 	}
 
 	tests := []struct {
@@ -28,7 +28,7 @@ func TestMetrics_SetMetrics(t *testing.T) {
 		{
 			ms:      &memSt,
 			name:    "positive test #1",
-			request: "/update/something/somemetric/300",
+			request: "/update/",
 			want: want{
 				statusCode: 400,
 			},
@@ -38,7 +38,7 @@ func TestMetrics_SetMetrics(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			req := httptest.NewRequest(http.MethodPost, tt.request, nil)
 			w := httptest.NewRecorder()
-			tt.ms.SetGauge(w, req)
+			tt.ms.SetGaugeURL(w, req)
 			result := w.Result()
 			result.Body.Close()
 			assert.Equal(t, tt.want.statusCode, result.StatusCode)
@@ -47,13 +47,13 @@ func TestMetrics_SetMetrics(t *testing.T) {
 }
 
 func TestMetrics_SetGauge(t *testing.T) {
-	store := data.NewMetStore()
+	store := data.NewMetStore(data.StoreConfig{})
 	memSt := NewMetrics(store)
 
 	type want struct {
-		statusCode  int
-		response    string
-		contentType string
+		statusCode int
+		// response    string
+		// contentType string
 	}
 
 	tests := []struct {
@@ -107,7 +107,7 @@ func TestMetrics_SetGauge(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			req := httptest.NewRequest(http.MethodPost, tt.request, nil)
 			w := httptest.NewRecorder()
-			tt.ms.SetGauge(w, req)
+			tt.ms.SetGaugeURL(w, req)
 			result := w.Result()
 			result.Body.Close()
 			assert.Equal(t, tt.want.statusCode, result.StatusCode)
@@ -116,13 +116,13 @@ func TestMetrics_SetGauge(t *testing.T) {
 }
 
 func TestMetrics_SetCounter(t *testing.T) {
-	store := data.NewMetStore()
+	store := data.NewMetStore(data.StoreConfig{})
 	memSt := NewMetrics(store)
 
 	type want struct {
-		statusCode  int
-		response    string
-		contentType string
+		statusCode int
+		// response    string
+		// contentType string
 	}
 
 	tests := []struct {
@@ -176,10 +176,29 @@ func TestMetrics_SetCounter(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			req := httptest.NewRequest(http.MethodPost, tt.request, nil)
 			w := httptest.NewRecorder()
-			tt.ms.SetCounter(w, req)
+			tt.ms.SetCounterURL(w, req)
 			result := w.Result()
 			result.Body.Close()
 			assert.Equal(t, tt.want.statusCode, result.StatusCode)
+		})
+	}
+}
+
+func TestMetrics_SetMetricsJSON(t *testing.T) {
+	type args struct {
+		w   http.ResponseWriter
+		req *http.Request
+	}
+	tests := []struct {
+		name string
+		ms   *Metrics
+		args args
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.ms.SetMetricsJSON(tt.args.w, tt.args.req)
 		})
 	}
 }

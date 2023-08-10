@@ -3,15 +3,45 @@ package main
 import (
 	"flag"
 	"os"
+	"strconv"
+
+	logger "github.com/DEHbNO4b/metrics/internal/loger"
 )
 
-var flagRunAddr string
+var (
+	runAddr         string
+	storeInterval   int
+	filestoragepath string
+	restore         bool
+)
 
 func parseFlag() {
-	flag.StringVar(&flagRunAddr, "a", "localhost:8080", "adress and port for running")
+	flag.StringVar(&runAddr, "a", "localhost:8080", "adress and port for running")
+	flag.IntVar(&storeInterval, "i", 300, "data store interval")
+	flag.StringVar(&filestoragepath, "f", "/tmp/metrics-db.json", "file storage path")
+	flag.BoolVar(&restore, "r", true, "restore_flag")
 	flag.Parse()
 	if ep := os.Getenv("ADDRESS"); ep != "" {
-		flagRunAddr = ep
+		runAddr = ep
+	}
+	if si := os.Getenv("STORE_INTERVAL"); si != "" {
+		sInt, err := strconv.Atoi(si)
+		if err != nil {
+			logger.Log.Sugar().Error("unable to convert STORE_INTERVAL to int", err.Error())
+			return
+		}
+		storeInterval = sInt
+	}
+	if fp := os.Getenv("FILE_STORAGE_PATH"); fp != "" {
+		filestoragepath = fp
+	}
+	if r := os.Getenv("RESTORE"); r != "" {
+		re, err := strconv.ParseBool(r)
+		if err != nil {
+			logger.Log.Sugar().Error("unable to convert STORE_INTERVAL to int", err.Error())
+			return
+		}
+		restore = re
 	}
 
 }

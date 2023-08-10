@@ -1,74 +1,89 @@
 package agent
 
 import (
-	"math/rand"
+	"bytes"
+	"compress/gzip"
+	"encoding/json"
 	"net/http"
 	"runtime"
-	"strconv"
 	"time"
+
+	"github.com/DEHbNO4b/metrics/internal/data"
+	logger "github.com/DEHbNO4b/metrics/internal/loger"
+	"go.uber.org/zap"
 )
 
-func ReadRuntimeMetrics(m *runtime.MemStats, interval int) {
+type Agent struct {
+	m      *runtime.MemStats
+	client http.Client
+	url    string
+	gauges []data.Metrics
+}
+
+func NewAgent(endpoint string) Agent {
+	var m runtime.MemStats
+	cl := http.Client{Timeout: 1000 * time.Millisecond}
+	u := "http://" + endpoint
+	a := Agent{m: &m, client: cl, url: u, gauges: data.NewGauges()}
+	return a
+}
+
+func (a Agent) ReadRuntimeMetrics(interval int) {
 	var pollInterval = time.Duration(interval) * time.Second
 	for {
-		runtime.ReadMemStats(m)
+		runtime.ReadMemStats(a.m)
 		time.Sleep(pollInterval)
 	}
 
 }
-func PullMetrics(m *runtime.MemStats, interval int, endpoint string) {
+func (a Agent) PullMetrics(interval int) {
 	var reportInterval = time.Duration(interval) * time.Second
-
-	url := "http://" + endpoint
-	urlUpdateGauge := url + "/update/gauge/"
-	urlUpdateCounter := url + "/update/counter/"
-	client := http.Client{Timeout: 1000 * time.Millisecond}
-	var RandomValue float64
 	for {
-
-		go sendMetric(urlUpdateGauge+"Alloc/"+strconv.FormatUint(m.Alloc, 10), client)
-		go sendMetric(urlUpdateGauge+"BuckHashSys/"+strconv.FormatUint(m.BuckHashSys, 10), client)
-		go sendMetric(urlUpdateGauge+"Frees/"+strconv.FormatUint(m.Frees, 10), client)
-		go sendMetric(urlUpdateGauge+"GCCPUFraction/"+strconv.FormatFloat(m.GCCPUFraction, 'f', -1, 64), client)
-		go sendMetric(urlUpdateGauge+"GCSys/"+strconv.FormatUint(m.GCSys, 10), client)
-		go sendMetric(urlUpdateGauge+"HeapAlloc/"+strconv.FormatUint(m.HeapAlloc, 10), client)
-		go sendMetric(urlUpdateGauge+"HeapIdle/"+strconv.FormatUint(m.HeapIdle, 10), client)
-		go sendMetric(urlUpdateGauge+"HeapInuse/"+strconv.FormatUint(m.HeapInuse, 10), client)
-		go sendMetric(urlUpdateGauge+"HeapObjects/"+strconv.FormatUint(m.HeapObjects, 10), client)
-		go sendMetric(urlUpdateGauge+"HeapReleased/"+strconv.FormatUint(m.HeapReleased, 10), client)
-		go sendMetric(urlUpdateGauge+"HeapSys/"+strconv.FormatUint(m.HeapSys, 10), client)
-		go sendMetric(urlUpdateGauge+"LastGC/"+strconv.FormatUint(m.LastGC, 10), client)
-		go sendMetric(urlUpdateGauge+"Lookups/"+strconv.FormatUint(m.Lookups, 10), client)
-		go sendMetric(urlUpdateGauge+"MCacheInuse/"+strconv.FormatUint(m.MCacheInuse, 10), client)
-		go sendMetric(urlUpdateGauge+"Mallocs/"+strconv.FormatUint(m.Mallocs, 10), client)
-		go sendMetric(urlUpdateGauge+"MSpanSys/"+strconv.FormatUint(m.MSpanSys, 10), client)
-		go sendMetric(urlUpdateGauge+"MSpanInuse/"+strconv.FormatUint(m.MSpanInuse, 10), client)
-		go sendMetric(urlUpdateGauge+"MCacheSys/"+strconv.FormatUint(m.MCacheSys, 10), client)
-		go sendMetric(urlUpdateGauge+"NextGC/"+strconv.FormatUint(m.NextGC, 10), client)
-		go sendMetric(urlUpdateGauge+"NumForcedGC/"+strconv.FormatUint(uint64(m.NumForcedGC), 10), client)
-		go sendMetric(urlUpdateGauge+"NumGC/"+strconv.FormatUint(uint64(m.NumGC), 10), client)
-		go sendMetric(urlUpdateGauge+"OtherSys/"+strconv.FormatUint(m.OtherSys, 10), client)
-		go sendMetric(urlUpdateGauge+"PauseTotalNs/"+strconv.FormatUint(m.PauseTotalNs, 10), client)
-		go sendMetric(urlUpdateGauge+"StackInuse/"+strconv.FormatUint(m.StackInuse, 10), client)
-		go sendMetric(urlUpdateGauge+"StackSys/"+strconv.FormatUint(m.StackSys, 10), client)
-		go sendMetric(urlUpdateGauge+"Sys/"+strconv.FormatUint(m.Sys, 10), client)
-		go sendMetric(urlUpdateGauge+"TotalAlloc/"+strconv.FormatUint(m.TotalAlloc, 10), client)
-
-		RandomValue = rand.Float64()
-		go sendMetric(urlUpdateGauge+"RandomValue/"+strconv.FormatFloat(RandomValue, 'f', -1, 64), client)
-
-		go sendMetric(urlUpdateCounter+"PollCount/1", client)
-
+		for _, el := range a.gauges {
+			el.ReadValue(a.m)
+			go a.sendMetric(el)
+		}
+		d := int64(1)
+		go a.sendMetric(data.Metrics{ID: "PollCount", MType: "counter", Delta: &d})
 		time.Sleep(reportInterval)
 	}
 
 }
 
-func sendMetric(uri string, client http.Client) error {
-	resp, err := client.PostForm(uri, nil)
+func (a Agent) sendMetric(m data.Metrics) {
+	buf := bytes.Buffer{}
+	enc := json.NewEncoder(&buf)
+	err := enc.Encode(&m)
 	if err != nil {
-		return err
+		logger.Log.Info("unable to encode metric", zap.String("err: ", err.Error()))
+		return
+	}
+	compressed := bytes.Buffer{}
+	compressor, err := gzip.NewWriterLevel(&compressed, gzip.BestCompression)
+	if err != nil {
+		logger.Log.Sugar().Error(err.Error())
+		return
+	}
+	// fmt.Println(buf.Bytes())
+	compressor.Write(buf.Bytes())
+	compressor.Close()
+
+	req, err := http.NewRequest(http.MethodPost, a.url+"/update/", &compressed) // (1)
+	if err != nil {
+		logger.Log.Sugar().Error(err.Error())
+		return
+	}
+
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Accept", "application/json")
+	req.Header.Add("Content-encoding", "gzip")
+	req.Header.Add("Accept-encoding", "gzip")
+
+	// resp, err := a.client.Post(a.url+"/update/", "application/json", &b)
+	resp, err := a.client.Do(req)
+	if err != nil {
+		logger.Log.Sugar().Error(err.Error())
+		return
 	}
 	resp.Body.Close()
-	return nil
 }

@@ -1,87 +1,95 @@
 package data
 
 import (
-	"errors"
-	"strconv"
-	"sync"
+	"math/rand"
+	"runtime"
+
+	logger "github.com/DEHbNO4b/metrics/internal/loger"
+	"go.uber.org/zap"
 )
 
-type Gauge struct {
-	Name string
-	Val  float64
+type Metrics struct {
+	ID    string   `json:"id"`              // имя метрики
+	MType string   `json:"type"`            // параметр, принимающий значение gauge или counter
+	Delta *int64   `json:"delta,omitempty"` // значение метрики в случае передачи counter
+	Value *float64 `json:"value,omitempty"` // значение метрики в случае передачи gauge
 }
 
-func (g Gauge) String() string {
-	return g.Name + ": " + strconv.FormatFloat(g.Val, 'f', -1, 64)
+func NewMetric() Metrics {
+	var delta int64 = 0
+	var value float64 = 0
+	return Metrics{Delta: &delta, Value: &value}
 }
-
-type Counter struct {
-	Name string
-	Val  int64
-}
-
-func (c Counter) String() string {
-	return c.Name + ": " + strconv.FormatInt(c.Val, 10)
-}
-
-type MetStore struct {
-	Gauges   map[string]float64
-	Counters map[string]int64
-}
-
-func NewMetStore() *MetStore {
-	g := make(map[string]float64)
-	c := make(map[string]int64)
-	ms := MetStore{Gauges: g, Counters: c}
-	return &ms
-}
-func (ms *MetStore) GetMetrics() []string {
-	m := make([]string, 0, 20)
-	for name, val := range ms.Gauges {
-		m = append(m, name+":"+strconv.FormatFloat(val, 'f', -1, 64))
-	}
-	for name, val := range ms.Counters {
-		m = append(m, name+":"+strconv.FormatInt(val, 10))
-	}
-	return m
-}
-func (ms *MetStore) SetGauge(g Gauge) error {
-	lock := sync.Mutex{}
-	lock.Lock()
-	ms.Gauges[g.Name] = g.Val
-	lock.Unlock()
-	return nil
-}
-func (ms *MetStore) SetCounter(c Counter) error {
-	lock := sync.Mutex{}
-	lock.Lock()
-	ms.Counters[c.Name] = ms.Counters[c.Name] + c.Val
-	lock.Unlock()
-	return nil
-}
-func (ms *MetStore) GetGauge(name string) (Gauge, error) {
-	lock := sync.RWMutex{}
-	g := Gauge{}
-	g.Name = name
-	lock.RLock()
-	v, ok := ms.Gauges[name]
-	lock.RUnlock()
+func (m *Metrics) ReadValue(mem *runtime.MemStats) {
+	reader, ok := metricReaders[m.ID]
 	if !ok {
-		return g, errors.New("not contains this metric")
+		logger.Log.Error("dont have metric with that name", zap.String("name", m.ID))
 	}
-	g.Val = v
-	return g, nil
+	val := reader(mem)
+	m.Value = &val
 }
-func (ms *MetStore) GetCounter(name string) (Counter, error) {
-	c := Counter{}
-	c.Name = name
-	lock := sync.RWMutex{}
-	lock.RLock()
-	v, ok := ms.Counters[name]
-	lock.RUnlock()
-	if !ok {
-		return c, errors.New("not contains this metric")
-	}
-	c.Val = v
-	return c, nil
+
+var metricReaders = map[string]func(m *runtime.MemStats) float64{
+	"Alloc":         func(m *runtime.MemStats) float64 { return float64(m.Alloc) },
+	"BuckHashSys":   func(m *runtime.MemStats) float64 { return float64(m.BuckHashSys) },
+	"Frees":         func(m *runtime.MemStats) float64 { return float64(m.Frees) },
+	"GCCPUFraction": func(m *runtime.MemStats) float64 { return float64(m.GCCPUFraction) },
+	"GCSys":         func(m *runtime.MemStats) float64 { return float64(m.GCSys) },
+	"HeapAlloc":     func(m *runtime.MemStats) float64 { return float64(m.HeapAlloc) },
+	"HeapIdle":      func(m *runtime.MemStats) float64 { return float64(m.HeapIdle) },
+	"HeapInuse":     func(m *runtime.MemStats) float64 { return float64(m.HeapInuse) },
+	"HeapObjects":   func(m *runtime.MemStats) float64 { return float64(m.HeapObjects) },
+	"HeapReleased":  func(m *runtime.MemStats) float64 { return float64(m.HeapReleased) },
+	"HeapSys":       func(m *runtime.MemStats) float64 { return float64(m.HeapSys) },
+	"LastGC":        func(m *runtime.MemStats) float64 { return float64(m.LastGC) },
+	"Lookups":       func(m *runtime.MemStats) float64 { return float64(m.Lookups) },
+	"MCacheInuse":   func(m *runtime.MemStats) float64 { return float64(m.MCacheInuse) },
+	"MCacheSys":     func(m *runtime.MemStats) float64 { return float64(m.MCacheSys) },
+	"MSpanInuse":    func(m *runtime.MemStats) float64 { return float64(m.MSpanInuse) },
+	"MSpanSys":      func(m *runtime.MemStats) float64 { return float64(m.MSpanSys) },
+	"Mallocs":       func(m *runtime.MemStats) float64 { return float64(m.Mallocs) },
+	"NextGC":        func(m *runtime.MemStats) float64 { return float64(m.NextGC) },
+	"NumForcedGC":   func(m *runtime.MemStats) float64 { return float64(m.NumForcedGC) },
+	"NumGC":         func(m *runtime.MemStats) float64 { return float64(m.NumGC) },
+	"OtherSys":      func(m *runtime.MemStats) float64 { return float64(m.OtherSys) },
+	"PauseTotalNs":  func(m *runtime.MemStats) float64 { return float64(m.PauseTotalNs) },
+	"StackInuse":    func(m *runtime.MemStats) float64 { return float64(m.StackInuse) },
+	"StackSys":      func(m *runtime.MemStats) float64 { return float64(m.StackSys) },
+	"Sys":           func(m *runtime.MemStats) float64 { return float64(m.Sys) },
+	"TotalAlloc":    func(m *runtime.MemStats) float64 { return float64(m.TotalAlloc) },
+	"RandomValue":   func(m *runtime.MemStats) float64 { return rand.Float64() },
+}
+var gauges = []Metrics{
+	{ID: "Alloc", MType: "gauge"},
+	{ID: "BuckHashSys", MType: "gauge"},
+	{ID: "Frees", MType: "gauge"},
+	{ID: "GCCPUFraction", MType: "gauge"},
+	{ID: "GCSys", MType: "gauge"},
+	{ID: "HeapAlloc", MType: "gauge"},
+	{ID: "HeapIdle", MType: "gauge"},
+	{ID: "HeapInuse", MType: "gauge"},
+	{ID: "HeapObjects", MType: "gauge"},
+	{ID: "HeapReleased", MType: "gauge"},
+	{ID: "HeapSys", MType: "gauge"},
+	{ID: "LastGC", MType: "gauge"},
+	{ID: "Lookups", MType: "gauge"},
+	{ID: "MCacheInuse", MType: "gauge"},
+	{ID: "MCacheSys", MType: "gauge"},
+	{ID: "MSpanInuse", MType: "gauge"},
+	{ID: "MSpanSys", MType: "gauge"},
+	{ID: "Mallocs", MType: "gauge"},
+	{ID: "NextGC", MType: "gauge"},
+	{ID: "NumForcedGC", MType: "gauge"},
+	{ID: "NumGC", MType: "gauge"},
+	{ID: "OtherSys", MType: "gauge"},
+	{ID: "PauseTotalNs", MType: "gauge"},
+	{ID: "StackInuse", MType: "gauge"},
+	{ID: "StackSys", MType: "gauge"},
+	{ID: "Sys", MType: "gauge"},
+	{ID: "TotalAlloc", MType: "gauge"},
+	{ID: "RandomValue", MType: "gauge"},
+}
+
+func NewGauges() []Metrics {
+	return gauges
 }
