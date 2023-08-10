@@ -250,9 +250,9 @@ jobs:
           github.head_ref == 'iter13' ||
           github.head_ref == 'iter14'
         run: |
-          SERVER_PORT=$(random unused-port)
+          SERVER_PORT=8080
           ADDRESS="localhost:${SERVER_PORT}"
-          TEMP_FILE=$(random tempfile)
+          TEMP_FILE="./tmp/test.json"
           metricstest -test.v -test.run=^TestIteration9$ \
             -agent-binary-path=cmd/agent/agent \
             -binary-path=cmd/server/server \
@@ -269,13 +269,13 @@ jobs:
           github.head_ref == 'iter13' ||
           github.head_ref == 'iter14'
         run: |
-          SERVER_PORT=$(random unused-port)
+          SERVER_PORT=8090
           ADDRESS="localhost:${SERVER_PORT}"
           TEMP_FILE=$(random tempfile)
           metricstest -test.v -test.run=^TestIteration10[AB]$ \
             -agent-binary-path=cmd/agent/agent \
             -binary-path=cmd/server/server \
-            -database-dsn='postgres://postgres:postgres@postgres:5432/praktikum?sslmode=disable' \
+            -database-dsn='postgres://postgres:917836@localhost:5432/lightning?sslmode=disable' \
             -server-port=$SERVER_PORT \
             -source-path=.
 
@@ -287,13 +287,13 @@ jobs:
           github.head_ref == 'iter13' ||
           github.head_ref == 'iter14'
         run: |
-          SERVER_PORT=$(random unused-port)
+          SERVER_PORT=8080
           ADDRESS="localhost:${SERVER_PORT}"
           TEMP_FILE=$(random tempfile)
           metricstest -test.v -test.run=^TestIteration11$ \
             -agent-binary-path=cmd/agent/agent \
             -binary-path=cmd/server/server \
-            -database-dsn='postgres://postgres:postgres@postgres:5432/praktikum?sslmode=disable' \
+            -database-dsn='postgres://postgres:917836@localhost:5432/lightning?sslmode=disable' \
             -server-port=$SERVER_PORT \
             -source-path=.
 

@@ -16,6 +16,7 @@ import (
 
 type Metrics struct {
 	MemStorage interfaces.MetricsStorage
+	Pinger     interfaces.Pinger
 }
 
 func NewMetrics(m interfaces.MetricsStorage) Metrics {
@@ -159,4 +160,12 @@ func (ms *Metrics) GetMetricURL(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "", http.StatusBadRequest)
 	}
 	w.Write([]byte(data))
+}
+func (ms *Metrics) PingDb(w http.ResponseWriter, r *http.Request) {
+	err := ms.Pinger.Ping()
+	if err != nil {
+		http.Error(w, "db disconeccted", http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
 }
