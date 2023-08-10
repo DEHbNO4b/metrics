@@ -16,20 +16,20 @@ import (
 
 type MetricsDB struct {
 	Config data.StoreConfig
-	Db     *sql.DB
+	DB     *sql.DB
 }
 
-func NewMetricsDb(dsn string) *MetricsDB {
+func NewMetricsDB(dsn string) *MetricsDB {
 
 	db, err := sql.Open("pgx", dsn)
 	if err != nil {
 		logger.Log.Error("cannot open db", zap.Error(err))
 		return nil
 	}
-	return &MetricsDB{Db: db}
+	return &MetricsDB{DB: db}
 }
 func (mdb *MetricsDB) Ping() error {
-	return mdb.Db.Ping()
+	return mdb.DB.Ping()
 }
 func (mdb *MetricsDB) SetMetric(metric data.Metrics) error {
 	switch metric.MType {
