@@ -29,7 +29,7 @@ func (ms *Metrics) SetMetricsJSON(w http.ResponseWriter, req *http.Request) {
 	dec := json.NewDecoder(req.Body)
 	err := dec.Decode(&m)
 	if err != nil {
-		logger.Log.Info("unable to decode json", zap.String("err", err.Error()))
+		logger.Log.Info("unable to decode json from req.Body", zap.String("err", err.Error()))
 		http.Error(w, "Bad request", http.StatusBadRequest)
 		return
 	}
@@ -81,34 +81,54 @@ func (ms *Metrics) GetMetrics(w http.ResponseWriter, r *http.Request) {
 func (ms *Metrics) SetMetricsURL(w http.ResponseWriter, req *http.Request) {
 	url, _ := strings.CutPrefix(req.URL.Path, "/update/")
 	urlValues := strings.Split(url, "/")
-	if len(urlValues) < 3 {
-		http.Error(w, "", http.StatusNotFound)
-		return
-	}
-	if urlValues[0] == "" {
-		http.Error(w, "", http.StatusNotFound)
-		return
-	}
+	// if len(urlValues) < 3 {
+	// 	http.Error(w, "", http.StatusNotFound)
+	// 	return
+	// }
+	// if urlValues[0] == "" {
+	// 	http.Error(w, "", http.StatusNotFound)
+	// 	return
+	// }
 	if urlValues[1] == "" {
 		http.Error(w, "", http.StatusNotFound)
 		return
 	}
-	if urlValues[0] != "counter" && urlValues[0] != "gauge" {
-		http.Error(w, "Bad request", http.StatusBadRequest)
-		return
-	}
+	// if urlValues[0] != "counter" && urlValues[0] != "gauge" {
+	// 	http.Error(w, "Bad request", http.StatusBadRequest)
+	// 	return
+	// }
+	m := data.Metrics{}
+	m.MType = urlValues[0]
+	m.ID = urlValues[1]
 
 	switch urlValues[0] {
 	case "gauge":
-		ms.SetGaugeURL(w, req)
+		val, err := strconv.ParseFloat(urlValues[2], 64)
+		if err != nil {
+			http.Error(w, "Wrong metric value", http.StatusBadRequest)
+			return
+		}
+		*m.Value = val
 	case "counter":
-		ms.SetCounterURL(w, req)
+		del, err := strconv.Atoi(urlValues[2])
+		if err != nil {
+			http.Error(w, "Wrong metric value", http.StatusBadRequest)
+			return
+		}
+		*m.Delta = int64(del)
 	default:
 		{
 			http.Error(w, "Wrong metric type", http.StatusBadRequest)
 			return
 		}
 	}
+	err := ms.MemStorage.SetMetric(m)
+	if err != nil {
+		logger.Log.Sugar().Error(err.Error())
+		http.Error(w, "Bad request", http.StatusBadRequest)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
 }
 func (ms *Metrics) SetGaugeURL(w http.ResponseWriter, req *http.Request) {
 	url, _ := strings.CutPrefix(req.URL.Path, "/update/gauge/")
