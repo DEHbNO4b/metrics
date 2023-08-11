@@ -20,8 +20,7 @@ var CreateCounters string = `CREATE TABLE IF NOT EXISTS gauges(
 									);`
 
 type PostgresDB struct {
-	Config data.StoreConfig
-	DB     *sql.DB
+	DB *sql.DB
 }
 
 func NewPostgresDB(dsn string) *PostgresDB {
@@ -30,6 +29,9 @@ func NewPostgresDB(dsn string) *PostgresDB {
 	if err != nil {
 		logger.Log.Panic("cannot open db", zap.Error(err))
 		return nil
+	}
+	if err := db.Ping(); err != nil {
+		panic(err)
 	}
 	_, err = db.Exec(CreateGauges)
 	if err != nil {

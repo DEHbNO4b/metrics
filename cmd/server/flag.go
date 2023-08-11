@@ -4,9 +4,7 @@ import (
 	"flag"
 	"os"
 	"strconv"
-	"time"
 
-	"github.com/DEHbNO4b/metrics/internal/data"
 	logger "github.com/DEHbNO4b/metrics/internal/loger"
 )
 
@@ -16,7 +14,6 @@ var (
 	dsn             string
 	storeInterval   int
 	restore         bool
-	storeConfig     data.StoreConfig
 )
 
 func parseFlag() {
@@ -24,6 +21,7 @@ func parseFlag() {
 	flag.IntVar(&storeInterval, "i", 300, "data store interval")
 	flag.StringVar(&filestoragepath, "f", "/tmp/metrics-db.json", "file storage path")
 	flag.StringVar(&dsn, "d", "", "dsn for postgres")
+	// flag.StringVar(&dsn, "d", "postgres://postgres:917836@localhost:5432/lightning?", "dsn for postgres")
 	flag.BoolVar(&restore, "r", true, "restore_flag")
 	flag.Parse()
 	if ep := os.Getenv("ADDRESS"); ep != "" {
@@ -51,5 +49,5 @@ func parseFlag() {
 		}
 		restore = re
 	}
-	storeConfig = data.StoreConfig{StoreInterval: time.Duration(storeInterval) * time.Second, Filepath: filestoragepath, Restore: restore}
+	// storeConfig = data.StoreConfig{StoreInterval: time.Duration(storeInterval) * time.Second, Filepath: filestoragepath, Restore: restore}
 }

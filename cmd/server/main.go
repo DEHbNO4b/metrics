@@ -2,9 +2,11 @@ package main
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/DEHbNO4b/metrics/internal/data"
 	"github.com/DEHbNO4b/metrics/internal/handlers"
+	"github.com/DEHbNO4b/metrics/internal/interfaces"
 	logger "github.com/DEHbNO4b/metrics/internal/loger"
 	"github.com/DEHbNO4b/metrics/internal/maindb"
 	"github.com/DEHbNO4b/metrics/internal/middleware"
@@ -13,19 +15,31 @@ import (
 	"go.uber.org/zap"
 )
 
+var store interfaces.MetricsStorage
+
 func main() {
+
 	if err := logger.Initialize("info"); err != nil {
 		panic(err)
 	}
 	parseFlag()
 	router := chi.NewRouter()
-	// storeConfig := data.StoreConfig{StoreInterval: time.Duration(storeInterval) * time.Second, Filepath: filestoragepath, Restore: restore}
-	postgresDB := maindb.NewPostgresDB(dsn)
-	defer postgresDB.DB.Close()
+	storeConfig := data.StoreConfig{StoreInterval: time.Duration(storeInterval) * time.Second, Filepath: filestoragepath, Restore: restore}
+	// metricsDB := maindb.NewPostgresDB(dsn)
+	// defer metricsDB.DB.Close()
+
 	ms := data.NewMetStore(storeConfig)
 	defer ms.StoreData()
-	mhandler := handlers.NewMetrics(ms)
-	mhandler.Pinger = postgresDB
+	if dsn != "" {
+		metricsDB := maindb.NewPostgresDB(dsn)
+		defer metricsDB.DB.Close()
+		store = metricsDB
+	} else {
+		store = ms
+	}
+	mhandler := handlers.NewMetrics(store)
+	// mhandler.Pinger = metricsDB
+
 	router.Use(middleware.WithLogging)
 	router.Use(middleware.GzipHandle)
 	router.Post(`/update/{type}/{name}/{value}`, http.HandlerFunc(mhandler.SetMetricsURL))
