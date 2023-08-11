@@ -16,6 +16,7 @@ import (
 )
 
 var store interfaces.MetricsStorage
+var pinger interfaces.Pinger
 
 func main() {
 
@@ -34,11 +35,12 @@ func main() {
 		metricsDB := maindb.NewPostgresDB(dsn)
 		defer metricsDB.DB.Close()
 		store = metricsDB
+		pinger = metricsDB
 	} else {
 		store = ms
 	}
 	mhandler := handlers.NewMetrics(store)
-	// mhandler.Pinger = metricsDB
+	mhandler.Pinger = pinger
 
 	router.Use(middleware.WithLogging)
 	router.Use(middleware.GzipHandle)
