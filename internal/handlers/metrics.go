@@ -78,8 +78,9 @@ func (ms *Metrics) GetMetrics(w http.ResponseWriter, r *http.Request) {
 	io.WriteString(w, formend)
 }
 
-func (ms *Metrics) SetMetricsURL(w http.ResponseWriter, req *http.Request) {
-	url, _ := strings.CutPrefix(req.URL.Path, "/update/")
+func (ms *Metrics) SetMetricsURL(w http.ResponseWriter, r *http.Request) {
+	logger.Log.Info("in set metrics url")
+	url, _ := strings.CutPrefix(r.URL.Path, "/update/")
 	urlValues := strings.Split(url, "/")
 	// if len(urlValues) < 3 {
 	// 	http.Error(w, "", http.StatusNotFound)
@@ -108,14 +109,14 @@ func (ms *Metrics) SetMetricsURL(w http.ResponseWriter, req *http.Request) {
 			http.Error(w, "Wrong metric value", http.StatusBadRequest)
 			return
 		}
-		*m.Value = val
+		m.Value = &val
 	case "counter":
-		del, err := strconv.Atoi(urlValues[2])
+		del, err := strconv.ParseInt(urlValues[2], 10, 64)
 		if err != nil {
 			http.Error(w, "Wrong metric value", http.StatusBadRequest)
 			return
 		}
-		*m.Delta = int64(del)
+		m.Delta = &del
 	default:
 		{
 			http.Error(w, "Wrong metric type", http.StatusBadRequest)

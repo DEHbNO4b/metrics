@@ -30,17 +30,17 @@ func NewPostgresDB(dsn string) *PostgresDB {
 		logger.Log.Panic("cannot open db", zap.Error(err))
 		return nil
 	}
-	if err := db.Ping(); err != nil {
-		panic(err)
-	}
-	_, err = db.Exec(CreateGauges)
-	if err != nil {
-		logger.Log.Panic("cannot create table in db", zap.Error(err))
-	}
-	_, err = db.Exec(CreateCounters)
-	if err != nil {
-		logger.Log.Panic("cannot create table in  db", zap.Error(err))
-	}
+	// if err := db.Ping(); err != nil {
+	// 	panic(err)
+	// }
+	// _, err = db.Exec(CreateGauges)
+	// if err != nil {
+	// 	logger.Log.Panic("cannot create table in db", zap.Error(err))
+	// }
+	// _, err = db.Exec(CreateCounters)
+	// if err != nil {
+	// 	logger.Log.Panic("cannot create table in  db", zap.Error(err))
+	// }
 	return &PostgresDB{DB: db}
 }
 func (mdb *PostgresDB) Ping() error {
