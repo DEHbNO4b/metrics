@@ -15,8 +15,8 @@ import (
 	"go.uber.org/zap"
 )
 
-var store interfaces.MetricsStorage
-var pinger interfaces.Pinger
+var store interfaces.MetricsStorage = nil
+var pinger interfaces.Pinger = nil
 
 func main() {
 
