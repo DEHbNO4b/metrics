@@ -2,199 +2,46 @@ package handlers
 
 import (
 	"net/http"
+	"net/http/httptest"
 	"testing"
+
+	"github.com/DEHbNO4b/metrics/internal/data"
+	"github.com/stretchr/testify/assert"
 )
 
-// func TestMetrics_SetMetrics(t *testing.T) {
-// 	store := data.MetStore{}
-// 	memSt := NewMetrics(&store)
+func TestMetrics_SetMetrics(t *testing.T) {
+	store := data.MetStore{}
+	memSt := NewMetrics(&store)
 
-// 	type want struct {
-// 		statusCode int
-// 		// response    string
-// 		// contentType string
-// 	}
-
-// 	tests := []struct {
-// 		name    string
-// 		ms      *Metrics
-// 		request string
-// 		want    want
-// 	}{
-// 		{
-// 			ms:      &memSt,
-// 			name:    "positive test #1",
-// 			request: "/update/",
-// 			want: want{
-// 				statusCode: 400,
-// 			},
-// 		},
-// 	}
-// 	for _, tt := range tests {
-// 		t.Run(tt.name, func(t *testing.T) {
-// 			req := httptest.NewRequest(http.MethodPost, tt.request, nil)
-// 			w := httptest.NewRecorder()
-// 			tt.ms.SetGaugeURL(w, req)
-// 			result := w.Result()
-// 			result.Body.Close()
-// 			assert.Equal(t, tt.want.statusCode, result.StatusCode)
-// 		})
-// 	}
-// }
-
-// func TestMetrics_SetGauge(t *testing.T) {
-// 	store := data.NewMetStore(data.StoreConfig{})
-// 	memSt := NewMetrics(store)
-
-// 	type want struct {
-// 		statusCode int
-// 		// response    string
-// 		// contentType string
-// 	}
-
-// 	tests := []struct {
-// 		name    string
-// 		ms      *Metrics
-// 		request string
-// 		want    want
-// 	}{
-// 		{
-// 			ms:      &memSt,
-// 			name:    "positive test ",
-// 			request: "/update/gauge/somemetric/300",
-// 			want: want{
-// 				statusCode: 200,
-// 			},
-// 		},
-// 		{
-// 			ms:      &memSt,
-// 			name:    "negative test ",
-// 			request: "/update/gauge/somemetric/k",
-// 			want: want{
-// 				statusCode: 400,
-// 			},
-// 		},
-// 		{
-// 			ms:      &memSt,
-// 			name:    "zero test",
-// 			request: "/update/gauge/somemetric/0",
-// 			want: want{
-// 				statusCode: 200,
-// 			},
-// 		},
-// 		{
-// 			ms:      &memSt,
-// 			name:    "big number ",
-// 			request: "/update/gauge/somemetric/9845649.8816513",
-// 			want: want{
-// 				statusCode: 200,
-// 			},
-// 		},
-// 		{
-// 			ms:      &memSt,
-// 			name:    "big negative number ",
-// 			request: "/update/gauge/somemetric/-9845649.8816513",
-// 			want: want{
-// 				statusCode: 200,
-// 			},
-// 		},
-// 	}
-// 	for _, tt := range tests {
-// 		t.Run(tt.name, func(t *testing.T) {
-// 			req := httptest.NewRequest(http.MethodPost, tt.request, nil)
-// 			w := httptest.NewRecorder()
-// 			tt.ms.SetGaugeURL(w, req)
-// 			result := w.Result()
-// 			result.Body.Close()
-// 			assert.Equal(t, tt.want.statusCode, result.StatusCode)
-// 		})
-// 	}
-// }
-
-// func TestMetrics_SetCounter(t *testing.T) {
-// 	store := data.NewMetStore(data.StoreConfig{})
-// 	memSt := NewMetrics(store)
-
-// 	type want struct {
-// 		statusCode int
-// 		// response    string
-// 		// contentType string
-// 	}
-
-// 	tests := []struct {
-// 		name    string
-// 		ms      *Metrics
-// 		request string
-// 		want    want
-// 	}{
-// 		{
-// 			ms:      &memSt,
-// 			name:    "positive test ",
-// 			request: "/update/counter/somemetric/3500",
-// 			want: want{
-// 				statusCode: 200,
-// 			},
-// 		},
-// 		{
-// 			ms:      &memSt,
-// 			name:    "negative test ",
-// 			request: "/update/counter/somemetric/k",
-// 			want: want{
-// 				statusCode: 400,
-// 			},
-// 		},
-// 		{
-// 			ms:      &memSt,
-// 			name:    "zero test ",
-// 			request: "/update/counter/somemetric/0",
-// 			want: want{
-// 				statusCode: 200,
-// 			},
-// 		},
-// 		{
-// 			ms:      &memSt,
-// 			name:    "big number ",
-// 			request: "/update/counter/somemetric/98456498816513",
-// 			want: want{
-// 				statusCode: 200,
-// 			},
-// 		},
-// 		{
-// 			ms:      &memSt,
-// 			name:    "big negative number ",
-// 			request: "/update/counter/somemetric/-98456498816513",
-// 			want: want{
-// 				statusCode: 200,
-// 			},
-// 		},
-// 	}
-// 	for _, tt := range tests {
-// 		t.Run(tt.name, func(t *testing.T) {
-// 			req := httptest.NewRequest(http.MethodPost, tt.request, nil)
-// 			w := httptest.NewRecorder()
-// 			tt.ms.SetCounterURL(w, req)
-// 			result := w.Result()
-// 			result.Body.Close()
-// 			assert.Equal(t, tt.want.statusCode, result.StatusCode)
-// 		})
-// 	}
-// }
-
-func TestMetrics_SetMetricsJSON(t *testing.T) {
-	type args struct {
-		w   http.ResponseWriter
-		req *http.Request
+	type want struct {
+		statusCode int
+		// response    string
+		// contentType string
 	}
+
 	tests := []struct {
-		name string
-		ms   *Metrics
-		args args
+		name    string
+		ms      *Metrics
+		request string
+		want    want
 	}{
-		// TODO: Add test cases.
+		{
+			ms:      &memSt,
+			name:    "negative test #1",
+			request: "/update/",
+			want: want{
+				statusCode: 400,
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tt.ms.SetMetricsJSON(tt.args.w, tt.args.req)
+			req := httptest.NewRequest(http.MethodPost, tt.request, nil)
+			w := httptest.NewRecorder()
+			tt.ms.SetMetricsJSON(w, req)
+			result := w.Result()
+			result.Body.Close()
+			assert.Equal(t, tt.want.statusCode, result.StatusCode)
 		})
 	}
 }
