@@ -69,18 +69,41 @@ func (ms *MetStore) GetMetrics() []string {
 	}
 	return m
 }
-func (ms *MetStore) SetGauge(g Gauge) error {
-	ms.Lock()
-	ms.Gauges[g.Name] = g.Val
-	ms.Unlock()
-	return nil
+func (ms *MetStore) GetMetric(met Metrics) (Metrics, error) {
+	// m := Metrics{}
+	switch met.MType {
+	case "gauge":
+		val, ok := ms.Gauges[met.ID]
+		if !ok {
+			return Metrics{}, errors.New("not contains this metric")
+		}
+		*met.Value = val
+	case "counter":
+		del, ok := ms.Counters[met.ID]
+		if !ok {
+			return Metrics{}, errors.New("not contains this metric")
+		}
+		*met.Delta = del
+	default:
+		return Metrics{}, errors.New("not contains this metric")
+	}
+
+	return met, nil
 }
-func (ms *MetStore) SetCounter(c Counter) error {
-	ms.Lock()
-	ms.Counters[c.Name] = ms.Counters[c.Name] + c.Val
-	ms.Unlock()
-	return nil
-}
+
+//	func (ms *MetStore) SetGauge(g Gauge) error {
+//		ms.Lock()
+//		ms.Gauges[g.Name] = g.Val
+//		ms.Unlock()
+//		return nil
+//	}
+//
+//	func (ms *MetStore) SetCounter(c Counter) error {
+//		ms.Lock()
+//		ms.Counters[c.Name] = ms.Counters[c.Name] + c.Val
+//		ms.Unlock()
+//		return nil
+//	}
 func (ms *MetStore) GetGauge(name string) (Gauge, error) {
 	g := Gauge{}
 	g.Name = name

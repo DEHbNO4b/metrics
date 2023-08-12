@@ -109,14 +109,7 @@ func (mdb *PostgresDB) GetMetrics() []string {
 
 	return m
 }
-func (mdb *PostgresDB) SetGauge(g data.Gauge) error {
-	// ms.Gauges[g.Name] = g.Val
-	return nil
-}
-func (mdb *PostgresDB) SetCounter(c data.Counter) error {
-	// ms.Counters[c.Name] = ms.Counters[c.Name] + c.Val
-	return nil
-}
+
 func (mdb *PostgresDB) GetGauge(name string) (data.Gauge, error) {
 	g := data.Gauge{}
 	g.Name = name
