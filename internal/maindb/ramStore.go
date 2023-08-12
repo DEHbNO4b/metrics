@@ -28,7 +28,7 @@ type StoreConfig struct {
 	StoreInterval time.Duration
 	Restore       bool
 }
-type RamStore struct {
+type RAMStore struct {
 	Config   StoreConfig
 	Gauges   map[string]float64
 	Counters map[string]int64
@@ -36,52 +36,52 @@ type RamStore struct {
 	sync.RWMutex
 }
 
-func NewRamStore(config StoreConfig) *RamStore {
+func NewRAMStore(config StoreConfig) *RAMStore {
 	g := make(map[string]float64)
 	c := make(map[string]int64)
-	ms := RamStore{Config: config, Gauges: g, Counters: c}
+	ms := RAMStore{Config: config, Gauges: g, Counters: c}
 	if config.Restore {
 		ms.loadFromStoreFile()
 	}
 	go ms.storeSchedule()
 	return &ms
 }
-func (ms *RamStore) SetMetric(metric data.Metrics) error {
+func (rs *RAMStore) SetMetric(metric data.Metrics) error {
 	switch metric.MType {
 	case "gauge":
-		ms.Lock()
-		ms.Gauges[metric.ID] = *metric.Value
-		ms.Unlock()
+		rs.Lock()
+		rs.Gauges[metric.ID] = *metric.Value
+		rs.Unlock()
 	case "counter":
-		ms.Lock()
-		ms.Counters[metric.ID] = ms.Counters[metric.ID] + *metric.Delta
-		ms.Unlock()
+		rs.Lock()
+		rs.Counters[metric.ID] = rs.Counters[metric.ID] + *metric.Delta
+		rs.Unlock()
 	default:
 		return interfaces.ErrWrongType
 	}
 	return nil
 }
-func (ms *RamStore) GetMetrics() []string {
+func (rs *RAMStore) GetMetrics() []string {
 	m := make([]string, 0, 40)
-	for name, val := range ms.Gauges {
+	for name, val := range rs.Gauges {
 		m = append(m, name+":"+strconv.FormatFloat(val, 'f', -1, 64))
 	}
-	for name, val := range ms.Counters {
+	for name, val := range rs.Counters {
 		m = append(m, name+":"+strconv.FormatInt(val, 10))
 	}
 	return m
 }
-func (ms *RamStore) GetMetric(met data.Metrics) (data.Metrics, error) {
+func (rs *RAMStore) GetMetric(met data.Metrics) (data.Metrics, error) {
 	// m := data.Metrics{}
 	switch met.MType {
 	case "gauge":
-		val, ok := ms.Gauges[met.ID]
+		val, ok := rs.Gauges[met.ID]
 		if !ok {
 			return data.Metrics{}, interfaces.ErrNotContains
 		}
 		met.Value = &val
 	case "counter":
-		del, ok := ms.Counters[met.ID]
+		del, ok := rs.Counters[met.ID]
 		if !ok {
 			return data.Metrics{}, interfaces.ErrNotContains
 		}
@@ -93,16 +93,16 @@ func (ms *RamStore) GetMetric(met data.Metrics) (data.Metrics, error) {
 	return met, nil
 }
 
-func (ms *RamStore) GeMetricsData() []data.Metrics {
+func (rs *RAMStore) GeMetricsData() []data.Metrics {
 	metrics := make([]data.Metrics, 0, 30)
-	for name, val := range ms.Gauges {
+	for name, val := range rs.Gauges {
 		m := data.NewMetric()
 		m.ID = name
 		m.MType = "gauge"
 		*m.Value = val
 		metrics = append(metrics, m)
 	}
-	for name, val := range ms.Counters {
+	for name, val := range rs.Counters {
 		m := data.NewMetric()
 		m.ID = name
 		m.MType = "counter"
@@ -111,10 +111,10 @@ func (ms *RamStore) GeMetricsData() []data.Metrics {
 	}
 	return metrics
 }
-func (ms *RamStore) loadFromStoreFile() error {
-	file, err := os.OpenFile(filepath.FromSlash(ms.Config.Filepath), os.O_RDONLY, 0666)
+func (rs *RAMStore) loadFromStoreFile() error {
+	file, err := os.OpenFile(filepath.FromSlash(rs.Config.Filepath), os.O_RDONLY, 0666)
 	if err != nil {
-		logger.Log.Sugar().Error("unable to open storage file, filepath:  ", ms.Config.Filepath, err.Error())
+		logger.Log.Sugar().Error("unable to open storage file, filepath:  ", rs.Config.Filepath, err.Error())
 		return err
 	}
 	defer file.Close()
@@ -127,39 +127,45 @@ func (ms *RamStore) loadFromStoreFile() error {
 			logger.Log.Sugar().Error("unable to unmarshal json", err.Error())
 			continue
 		}
-		ms.SetMetric(metric)
+		rs.SetMetric(metric)
 	}
 	return nil
 }
-func (ms *RamStore) storeSchedule() {
+func (rs *RAMStore) storeSchedule() {
 	for {
-		err := ms.StoreData()
-		if err != nil {
-			return
-		}
-		time.Sleep(ms.Config.StoreInterval)
+		rs.StoreData()
+		time.Sleep(rs.Config.StoreInterval)
 	}
 }
-func (ms *RamStore) StoreData() error {
-	file, err := os.OpenFile(filepath.FromSlash(ms.Config.Filepath), os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0666)
+
+func (rs *RAMStore) StoreData() error {
+	data := rs.GeMetricsData()
+	err := rs.DB.WriteMetrics(data)
 	if err != nil {
-		logger.Log.Sugar().Error("unable to open|create storage file ", err.Error())
 		return err
 	}
-	data := ms.GeMetricsData()
-	for _, el := range data {
-
-		metric, err := json.Marshal(el)
-		if err != nil {
-			logger.Log.Sugar().Error("unable to encode metric ", err.Error())
-			continue
-		}
-		_, err = file.WriteString(string(metric) + "\r\n")
-		if err != nil {
-			logger.Log.Sugar().Error("unable to write data to file ", err.Error())
-			continue
-		}
-	}
-	file.Close()
 	return nil
 }
+
+// 	file, err := os.OpenFile(filepath.FromSlash(rs.Config.Filepath), os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0666)
+// 	if err != nil {
+// 		logger.Log.Sugar().Error("unable to open|create storage file ", err.Error())
+// 		return err
+// 	}
+// 	data := rs.GeMetricsData()
+// 	for _, el := range data {
+
+// 		metric, err := json.Marshal(el)
+// 		if err != nil {
+// 			logger.Log.Sugar().Error("unable to encode metric ", err.Error())
+// 			continue
+// 		}
+// 		_, err = file.WriteString(string(metric) + "\r\n")
+// 		if err != nil {
+// 			logger.Log.Sugar().Error("unable to write data to file ", err.Error())
+// 			continue
+// 		}
+// 	}
+// 	file.Close()
+// 	return nil
+// }

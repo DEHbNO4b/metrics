@@ -20,11 +20,18 @@ func main() {
 	parseFlag()
 	sqlDB := maindb.NewPostgresDB(dsn)
 	defer sqlDB.DB.Close()
+	filedb := maindb.NewFileDB(filestoragepath)
+	defer filedb.File.Close()
 	r := chi.NewRouter()
-	sc := maindb.StoreConfig{StoreInterval: time.Duration(storeInterval) * time.Second, Filepath: filestoragepath, Restore: restore}
-	ms := maindb.NewRamStore(sc)
-	defer ms.StoreData()
-	mh := handlers.NewMetrics(ms)
+	sc := maindb.StoreConfig{
+		StoreInterval: time.Duration(storeInterval) * time.Second,
+		Filepath:      filestoragepath,
+		Restore:       restore,
+	}
+	rs := maindb.NewRAMStore(sc)
+	rs.DB = filedb
+	defer rs.StoreData()
+	mh := handlers.NewMetrics(rs)
 	mh.Pinger = sqlDB
 	r.Use(middleware.WithLogging)
 	r.Use(middleware.GzipHandle)

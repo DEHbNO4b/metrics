@@ -8,13 +8,13 @@ import (
 )
 
 func TestRamStore_GetMetric(t *testing.T) {
-	store := NewRamStore(StoreConfig{})
+	store := NewRAMStore(StoreConfig{})
 	type args struct {
 		met data.Metrics
 	}
 	tests := []struct {
 		name    string
-		ms      *RamStore
+		ms      *RAMStore
 		args    args
 		want    data.Metrics
 		wantErr bool
