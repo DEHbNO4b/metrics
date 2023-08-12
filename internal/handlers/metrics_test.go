@@ -22,8 +22,6 @@ func TestMetrics_SetMetricsJSON(t *testing.T) {
 	}
 	type args struct {
 		body io.Reader
-		w    http.ResponseWriter
-		req  *http.Request
 	}
 	tests := []struct {
 		name string
@@ -55,15 +53,11 @@ func TestMetrics_SetMetricsJSON(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			request := httptest.NewRequest(http.MethodPost, "/update/", test.args.body)
-			// создаём новый Recorder
 			w := httptest.NewRecorder()
 			test.ms.SetMetricsJSON(w, request)
-
 			res := w.Result()
-
-			// tt.ms.SetMetricsJSON(tt.args.w, tt.args.req)
-			// res := tt.args.w.Result()
 			assert.Equal(t, test.want.code, res.StatusCode)
+			res.Body.Close()
 		})
 	}
 }

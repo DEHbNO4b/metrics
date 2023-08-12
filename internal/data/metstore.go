@@ -13,6 +13,9 @@ import (
 	logger "github.com/DEHbNO4b/metrics/internal/loger"
 )
 
+var ErrNotContains error = errors.New("not contains this metric")
+var ErrWrongType error = errors.New("wrong metric type")
+
 type Gauge struct {
 	Name string
 	Val  float64
@@ -55,7 +58,7 @@ func (ms *MetStore) SetMetric(metric Metrics) error {
 		ms.Counters[metric.ID] = ms.Counters[metric.ID] + *metric.Delta
 		ms.Unlock()
 	default:
-		return errors.New("wrong metric type")
+		return ErrWrongType
 	}
 	return nil
 }
@@ -75,17 +78,17 @@ func (ms *MetStore) GetMetric(met Metrics) (Metrics, error) {
 	case "gauge":
 		val, ok := ms.Gauges[met.ID]
 		if !ok {
-			return Metrics{}, errors.New("not contains this metric")
+			return Metrics{}, ErrNotContains
 		}
-		*met.Value = val
+		met.Value = &val
 	case "counter":
 		del, ok := ms.Counters[met.ID]
 		if !ok {
-			return Metrics{}, errors.New("not contains this metric")
+			return Metrics{}, ErrNotContains
 		}
-		*met.Delta = del
+		met.Delta = &del
 	default:
-		return Metrics{}, errors.New("not contains this metric")
+		return Metrics{}, ErrWrongType
 	}
 
 	return met, nil

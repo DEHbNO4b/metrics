@@ -47,8 +47,12 @@ func (ms *Metrics) GetMetricJSON(w http.ResponseWriter, r *http.Request) {
 	dec.Decode(&m)
 
 	m, err := ms.MemStorage.GetMetric(m)
-	if err != nil {
+	if err != nil && err == data.ErrWrongType {
 		http.Error(w, "", http.StatusBadRequest)
+		return
+	}
+	if err != nil && err == data.ErrNotContains {
+		http.Error(w, "", http.StatusNotFound)
 		return
 	}
 	// switch m.MType {
