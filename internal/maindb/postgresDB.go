@@ -28,7 +28,7 @@ func NewPostgresDB(dsn string) *PostgresDB {
 	db, err := sql.Open("pgx", dsn)
 	if err != nil {
 		logger.Log.Panic("cannot open db", zap.Error(err))
-		return nil
+		return &PostgresDB{}
 	}
 	// if err := db.Ping(); err != nil {
 	// 	panic(err)
@@ -44,6 +44,9 @@ func NewPostgresDB(dsn string) *PostgresDB {
 	return &PostgresDB{DB: db}
 }
 func (mdb *PostgresDB) Ping() error {
+	if mdb.DB == nil {
+		return errors.New("not connected to DB")
+	}
 	return mdb.DB.Ping()
 }
 func (mdb *PostgresDB) SetMetric(metric data.Metrics) error {

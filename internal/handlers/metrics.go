@@ -55,23 +55,6 @@ func (ms *Metrics) GetMetricJSON(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "", http.StatusNotFound)
 		return
 	}
-	// switch m.MType {
-	// case "gauge":
-	// 	g, err := ms.MemStorage.GetGauge(m.ID)
-	// 	if err != nil {
-	// 		http.Error(w, "", http.StatusNotFound)
-	// 	}
-	// 	m = data.Metrics{ID: g.Name, MType: "gauge", Value: &g.Val}
-
-	// case "counter":
-	// 	c, err := ms.MemStorage.GetCounter(m.ID)
-	// 	if err != nil {
-	// 		http.Error(w, "", http.StatusNotFound)
-	// 	}
-	// 	m = data.Metrics{ID: c.Name, MType: "counter", Delta: &c.Val}
-	// default:
-	// 	http.Error(w, "", http.StatusBadRequest)
-	// }
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	enc := json.NewEncoder(w)
@@ -151,27 +134,8 @@ func (ms *Metrics) GetMetricURL(w http.ResponseWriter, r *http.Request) {
 	default:
 		http.Error(w, "", http.StatusBadRequest)
 		return
-
 	}
 	w.Write([]byte(data))
-
-	// switch t {
-	// case "gauge":
-	// 	g, err := ms.MemStorage.GetGauge(name)
-	// 	if err != nil {
-	// 		http.Error(w, "", http.StatusNotFound)
-	// 	}
-	// 	data = strconv.FormatFloat(g.Val, 'f', -1, 64)
-	// case "counter":
-	// 	c, err := ms.MemStorage.GetCounter(name)
-	// 	if err != nil {
-	// 		http.Error(w, "", http.StatusNotFound)
-	// 	}
-	// 	data = strconv.FormatInt(c.Val, 10)
-	// default:
-	// 	http.Error(w, "", http.StatusBadRequest)
-	// }
-	//
 }
 func (ms *Metrics) PingDB(w http.ResponseWriter, r *http.Request) {
 	if ms.Pinger == nil {

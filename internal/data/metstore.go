@@ -94,43 +94,6 @@ func (ms *MetStore) GetMetric(met Metrics) (Metrics, error) {
 	return met, nil
 }
 
-//	func (ms *MetStore) SetGauge(g Gauge) error {
-//		ms.Lock()
-//		ms.Gauges[g.Name] = g.Val
-//		ms.Unlock()
-//		return nil
-//	}
-//
-//	func (ms *MetStore) SetCounter(c Counter) error {
-//		ms.Lock()
-//		ms.Counters[c.Name] = ms.Counters[c.Name] + c.Val
-//		ms.Unlock()
-//		return nil
-//	}
-func (ms *MetStore) GetGauge(name string) (Gauge, error) {
-	g := Gauge{}
-	g.Name = name
-	ms.RLock()
-	v, ok := ms.Gauges[name]
-	ms.RUnlock()
-	if !ok {
-		return g, errors.New("not contains this metric")
-	}
-	g.Val = v
-	return g, nil
-}
-func (ms *MetStore) GetCounter(name string) (Counter, error) {
-	c := Counter{}
-	c.Name = name
-	ms.RLock()
-	v, ok := ms.Counters[name]
-	ms.RUnlock()
-	if !ok {
-		return c, errors.New("not contains this metric")
-	}
-	c.Val = v
-	return c, nil
-}
 func (ms *MetStore) GeMetricsData() []Metrics {
 	metrics := make([]Metrics, 0, 30)
 	for name, val := range ms.Gauges {
