@@ -16,9 +16,9 @@ func TestMetrics_SetMetricsJSON(t *testing.T) {
 	metrics := NewMetrics(store)
 	b := []byte("")
 	type want struct {
-		code        int
-		response    string
-		contentType string
+		code int
+		// response    string
+		// contentType string
 	}
 	type args struct {
 		body io.Reader

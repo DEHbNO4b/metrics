@@ -132,24 +132,46 @@ func (ms *Metrics) SetMetricsURL(w http.ResponseWriter, r *http.Request) {
 func (ms *Metrics) GetMetricURL(w http.ResponseWriter, r *http.Request) {
 	t := chi.URLParam(r, "type")
 	name := chi.URLParam(r, "name")
+	metric := data.Metrics{ID: name, MType: t}
+	m, err := ms.MemStorage.GetMetric(metric)
+	if err != nil && err == data.ErrWrongType {
+		http.Error(w, "", http.StatusBadRequest)
+		return
+	}
+	if err != nil && err == data.ErrNotContains {
+		http.Error(w, "", http.StatusNotFound)
+		return
+	}
 	data := ""
-	switch t {
+	switch m.MType {
 	case "gauge":
-		g, err := ms.MemStorage.GetGauge(name)
-		if err != nil {
-			http.Error(w, "", http.StatusNotFound)
-		}
-		data = strconv.FormatFloat(g.Val, 'f', -1, 64)
+		data = strconv.FormatFloat(*m.Value, 'f', -1, 64)
 	case "counter":
-		c, err := ms.MemStorage.GetCounter(name)
-		if err != nil {
-			http.Error(w, "", http.StatusNotFound)
-		}
-		data = strconv.FormatInt(c.Val, 10)
+		data = strconv.FormatInt(*m.Delta, 10)
 	default:
 		http.Error(w, "", http.StatusBadRequest)
+		return
+
 	}
 	w.Write([]byte(data))
+
+	// switch t {
+	// case "gauge":
+	// 	g, err := ms.MemStorage.GetGauge(name)
+	// 	if err != nil {
+	// 		http.Error(w, "", http.StatusNotFound)
+	// 	}
+	// 	data = strconv.FormatFloat(g.Val, 'f', -1, 64)
+	// case "counter":
+	// 	c, err := ms.MemStorage.GetCounter(name)
+	// 	if err != nil {
+	// 		http.Error(w, "", http.StatusNotFound)
+	// 	}
+	// 	data = strconv.FormatInt(c.Val, 10)
+	// default:
+	// 	http.Error(w, "", http.StatusBadRequest)
+	// }
+	//
 }
 func (ms *Metrics) PingDB(w http.ResponseWriter, r *http.Request) {
 	if ms.Pinger == nil {
