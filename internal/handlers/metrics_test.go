@@ -7,18 +7,18 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/DEHbNO4b/metrics/internal/data"
+	"github.com/DEHbNO4b/metrics/internal/maindb"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestMetrics_SetMetricsJSON(t *testing.T) {
-	store := data.NewMetStore(data.StoreConfig{})
+	store := maindb.NewRamStore(maindb.StoreConfig{})
 	metrics := NewMetrics(store)
 	b := []byte("")
 	type want struct {
 		code int
 		// response    string
-		// contentType string
+
 	}
 	type args struct {
 		body io.Reader

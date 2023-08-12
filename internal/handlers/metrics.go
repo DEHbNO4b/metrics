@@ -47,11 +47,11 @@ func (ms *Metrics) GetMetricJSON(w http.ResponseWriter, r *http.Request) {
 	dec.Decode(&m)
 
 	m, err := ms.MemStorage.GetMetric(m)
-	if err != nil && err == data.ErrWrongType {
+	if err != nil && err == interfaces.ErrWrongType {
 		http.Error(w, "", http.StatusBadRequest)
 		return
 	}
-	if err != nil && err == data.ErrNotContains {
+	if err != nil && err == interfaces.ErrNotContains {
 		http.Error(w, "", http.StatusNotFound)
 		return
 	}
@@ -117,11 +117,11 @@ func (ms *Metrics) GetMetricURL(w http.ResponseWriter, r *http.Request) {
 	name := chi.URLParam(r, "name")
 	metric := data.Metrics{ID: name, MType: t}
 	m, err := ms.MemStorage.GetMetric(metric)
-	if err != nil && err == data.ErrWrongType {
+	if err != nil && err == interfaces.ErrWrongType {
 		http.Error(w, "", http.StatusBadRequest)
 		return
 	}
-	if err != nil && err == data.ErrNotContains {
+	if err != nil && err == interfaces.ErrNotContains {
 		http.Error(w, "", http.StatusNotFound)
 		return
 	}

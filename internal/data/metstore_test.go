@@ -5,14 +5,14 @@ import (
 	"testing"
 )
 
-func TestMetStore_GetMetric(t *testing.T) {
-	store := NewMetStore(StoreConfig{})
+func TestRamStore_GetMetric(t *testing.T) {
+	store := NewRamStore(StoreConfig{})
 	type args struct {
 		met Metrics
 	}
 	tests := []struct {
 		name    string
-		ms      *MetStore
+		ms      *RamStore
 		args    args
 		want    Metrics
 		wantErr bool
@@ -43,11 +43,11 @@ func TestMetStore_GetMetric(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := tt.ms.GetMetric(tt.args.met)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("MetStore.GetMetric() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("RamStore.GetMetric() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("MetStore.GetMetric() = %v, want %v", got, tt.want)
+				t.Errorf("RamStore.GetMetric() = %v, want %v", got, tt.want)
 			}
 		})
 	}

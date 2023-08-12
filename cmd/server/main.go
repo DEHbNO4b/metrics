@@ -4,7 +4,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/DEHbNO4b/metrics/internal/data"
 	"github.com/DEHbNO4b/metrics/internal/handlers"
 	logger "github.com/DEHbNO4b/metrics/internal/loger"
 	"github.com/DEHbNO4b/metrics/internal/maindb"
@@ -22,8 +21,8 @@ func main() {
 	sqlDB := maindb.NewPostgresDB(dsn)
 	defer sqlDB.DB.Close()
 	r := chi.NewRouter()
-	sc := data.StoreConfig{StoreInterval: time.Duration(storeInterval) * time.Second, Filepath: filestoragepath, Restore: restore}
-	ms := data.NewMetStore(sc)
+	sc := maindb.StoreConfig{StoreInterval: time.Duration(storeInterval) * time.Second, Filepath: filestoragepath, Restore: restore}
+	ms := maindb.NewRamStore(sc)
 	defer ms.StoreData()
 	mh := handlers.NewMetrics(ms)
 	mh.Pinger = sqlDB

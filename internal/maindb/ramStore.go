@@ -1,20 +1,18 @@
-package data
+package maindb
 
 import (
 	"bufio"
 	"encoding/json"
-	"errors"
 	"os"
 	"path/filepath"
 	"strconv"
 	"sync"
 	"time"
 
+	"github.com/DEHbNO4b/metrics/internal/data"
+	"github.com/DEHbNO4b/metrics/internal/interfaces"
 	logger "github.com/DEHbNO4b/metrics/internal/loger"
 )
-
-var ErrNotContains error = errors.New("not contains this metric")
-var ErrWrongType error = errors.New("wrong metric type")
 
 type Gauge struct {
 	Name string
@@ -30,24 +28,25 @@ type StoreConfig struct {
 	StoreInterval time.Duration
 	Restore       bool
 }
-type MetStore struct {
+type RamStore struct {
 	Config   StoreConfig
 	Gauges   map[string]float64
 	Counters map[string]int64
+	DB       interfaces.Database
 	sync.RWMutex
 }
 
-func NewMetStore(config StoreConfig) *MetStore {
+func NewRamStore(config StoreConfig) *RamStore {
 	g := make(map[string]float64)
 	c := make(map[string]int64)
-	ms := MetStore{Config: config, Gauges: g, Counters: c}
+	ms := RamStore{Config: config, Gauges: g, Counters: c}
 	if config.Restore {
 		ms.loadFromStoreFile()
 	}
 	go ms.storeSchedule()
 	return &ms
 }
-func (ms *MetStore) SetMetric(metric Metrics) error {
+func (ms *RamStore) SetMetric(metric data.Metrics) error {
 	switch metric.MType {
 	case "gauge":
 		ms.Lock()
@@ -58,11 +57,11 @@ func (ms *MetStore) SetMetric(metric Metrics) error {
 		ms.Counters[metric.ID] = ms.Counters[metric.ID] + *metric.Delta
 		ms.Unlock()
 	default:
-		return ErrWrongType
+		return interfaces.ErrWrongType
 	}
 	return nil
 }
-func (ms *MetStore) GetMetrics() []string {
+func (ms *RamStore) GetMetrics() []string {
 	m := make([]string, 0, 40)
 	for name, val := range ms.Gauges {
 		m = append(m, name+":"+strconv.FormatFloat(val, 'f', -1, 64))
@@ -72,39 +71,39 @@ func (ms *MetStore) GetMetrics() []string {
 	}
 	return m
 }
-func (ms *MetStore) GetMetric(met Metrics) (Metrics, error) {
-	// m := Metrics{}
+func (ms *RamStore) GetMetric(met data.Metrics) (data.Metrics, error) {
+	// m := data.Metrics{}
 	switch met.MType {
 	case "gauge":
 		val, ok := ms.Gauges[met.ID]
 		if !ok {
-			return Metrics{}, ErrNotContains
+			return data.Metrics{}, interfaces.ErrNotContains
 		}
 		met.Value = &val
 	case "counter":
 		del, ok := ms.Counters[met.ID]
 		if !ok {
-			return Metrics{}, ErrNotContains
+			return data.Metrics{}, interfaces.ErrNotContains
 		}
 		met.Delta = &del
 	default:
-		return Metrics{}, ErrWrongType
+		return data.Metrics{}, interfaces.ErrWrongType
 	}
 
 	return met, nil
 }
 
-func (ms *MetStore) GeMetricsData() []Metrics {
-	metrics := make([]Metrics, 0, 30)
+func (ms *RamStore) GeMetricsData() []data.Metrics {
+	metrics := make([]data.Metrics, 0, 30)
 	for name, val := range ms.Gauges {
-		m := NewMetric()
+		m := data.NewMetric()
 		m.ID = name
 		m.MType = "gauge"
 		*m.Value = val
 		metrics = append(metrics, m)
 	}
 	for name, val := range ms.Counters {
-		m := NewMetric()
+		m := data.NewMetric()
 		m.ID = name
 		m.MType = "counter"
 		*m.Delta = val
@@ -112,7 +111,7 @@ func (ms *MetStore) GeMetricsData() []Metrics {
 	}
 	return metrics
 }
-func (ms *MetStore) loadFromStoreFile() error {
+func (ms *RamStore) loadFromStoreFile() error {
 	file, err := os.OpenFile(filepath.FromSlash(ms.Config.Filepath), os.O_RDONLY, 0666)
 	if err != nil {
 		logger.Log.Sugar().Error("unable to open storage file, filepath:  ", ms.Config.Filepath, err.Error())
@@ -121,7 +120,7 @@ func (ms *MetStore) loadFromStoreFile() error {
 	defer file.Close()
 	scaner := bufio.NewScanner(file)
 	for scaner.Scan() {
-		metric := NewMetric()
+		metric := data.NewMetric()
 		line := scaner.Text()
 		err := json.Unmarshal([]byte(line), &metric)
 		if err != nil {
@@ -132,7 +131,7 @@ func (ms *MetStore) loadFromStoreFile() error {
 	}
 	return nil
 }
-func (ms *MetStore) storeSchedule() {
+func (ms *RamStore) storeSchedule() {
 	for {
 		err := ms.StoreData()
 		if err != nil {
@@ -141,7 +140,7 @@ func (ms *MetStore) storeSchedule() {
 		time.Sleep(ms.Config.StoreInterval)
 	}
 }
-func (ms *MetStore) StoreData() error {
+func (ms *RamStore) StoreData() error {
 	file, err := os.OpenFile(filepath.FromSlash(ms.Config.Filepath), os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0666)
 	if err != nil {
 		logger.Log.Sugar().Error("unable to open|create storage file ", err.Error())

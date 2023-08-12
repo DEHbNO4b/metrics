@@ -113,25 +113,25 @@ func (mdb *PostgresDB) GetMetrics() []string {
 	return m
 }
 
-func (mdb *PostgresDB) GetGauge(name string) (data.Gauge, error) {
-	g := data.Gauge{}
+func (mdb *PostgresDB) GetGauge(name string) (Gauge, error) {
+	g := Gauge{}
 	g.Name = name
 	row := mdb.DB.QueryRow(`select value from gauges where id = $1;`, name)
 	err := row.Scan(&g.Val)
 	if err != nil {
 		logger.Log.Error("cannot get gauge from db", zap.Error(err))
-		return data.Gauge{}, err
+		return Gauge{}, err
 	}
 	return g, nil
 }
-func (mdb *PostgresDB) GetCounter(name string) (data.Counter, error) {
-	c := data.Counter{}
+func (mdb *PostgresDB) GetCounter(name string) (Counter, error) {
+	c := Counter{}
 	c.Name = name
 	row := mdb.DB.QueryRow(`select delta from counters where id = $1;`, name)
 	err := row.Scan(&c.Val)
 	if err != nil {
 		logger.Log.Error("cannot get gauge from db", zap.Error(err))
-		return data.Counter{}, err
+		return Counter{}, err
 	}
 	return c, nil
 }
