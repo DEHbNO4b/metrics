@@ -61,3 +61,40 @@ func TestMetrics_SetMetricsJSON(t *testing.T) {
 		})
 	}
 }
+
+func TestMetrics_GetMetricJSON(t *testing.T) {
+	store := maindb.NewRamStore(maindb.StoreConfig{})
+	metrics := NewMetrics(store)
+	type want struct {
+		code int
+		// response    string
+
+	}
+
+	type args struct {
+		body io.Reader
+	}
+	tests := []struct {
+		name string
+		ms   *Metrics
+		args args
+		want want
+	}{
+		{
+			name: "emty body",
+			ms:   &metrics,
+			args: args{body: bytes.NewReader([]byte(""))},
+			want: want{code: 400},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			request := httptest.NewRequest(http.MethodPost, "/update/", tt.args.body)
+			w := httptest.NewRecorder()
+			tt.ms.GetMetricJSON(w, request)
+			res := w.Result()
+			assert.Equal(t, tt.want.code, res.StatusCode)
+			res.Body.Close()
+		})
+	}
+}

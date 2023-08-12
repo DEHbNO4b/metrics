@@ -44,9 +44,12 @@ func (ms *Metrics) SetMetricsJSON(w http.ResponseWriter, req *http.Request) {
 func (ms *Metrics) GetMetricJSON(w http.ResponseWriter, r *http.Request) {
 	m := data.Metrics{}
 	dec := json.NewDecoder(r.Body)
-	dec.Decode(&m)
+	err := dec.Decode(&m)
+	if err != nil {
+		http.Error(w, "unable to decode teq body", http.StatusBadRequest)
+	}
 
-	m, err := ms.MemStorage.GetMetric(m)
+	m, err = ms.MemStorage.GetMetric(m)
 	if err != nil && err == interfaces.ErrWrongType {
 		http.Error(w, "", http.StatusBadRequest)
 		return

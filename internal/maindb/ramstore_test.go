@@ -1,41 +1,43 @@
-package data
+package maindb
 
 import (
 	"reflect"
 	"testing"
+
+	"github.com/DEHbNO4b/metrics/internal/data"
 )
 
 func TestRamStore_GetMetric(t *testing.T) {
 	store := NewRamStore(StoreConfig{})
 	type args struct {
-		met Metrics
+		met data.Metrics
 	}
 	tests := []struct {
 		name    string
 		ms      *RamStore
 		args    args
-		want    Metrics
+		want    data.Metrics
 		wantErr bool
 	}{
 		{
 			name:    "empty id",
 			ms:      store,
-			args:    args{met: Metrics{}},
-			want:    Metrics{},
+			args:    args{met: data.Metrics{}},
+			want:    data.Metrics{},
 			wantErr: true,
 		},
 		{
 			name:    "wrong type",
 			ms:      store,
-			args:    args{met: Metrics{MType: "wrongType"}},
-			want:    Metrics{},
+			args:    args{met: data.Metrics{MType: "wrongType"}},
+			want:    data.Metrics{},
 			wantErr: true,
 		},
 		{
 			name:    "wrong type",
 			ms:      store,
-			args:    args{met: Metrics{MType: "gauge", ID: "someName"}},
-			want:    Metrics{},
+			args:    args{met: data.Metrics{MType: "gauge", ID: "someName"}},
+			want:    data.Metrics{},
 			wantErr: true,
 		},
 	}
