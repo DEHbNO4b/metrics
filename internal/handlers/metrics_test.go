@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"bytes"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -9,39 +11,59 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestMetrics_SetMetrics(t *testing.T) {
-	store := data.MetStore{}
-	memSt := NewMetrics(&store)
-
+func TestMetrics_SetMetricsJSON(t *testing.T) {
+	store := data.NewMetStore(data.StoreConfig{})
+	metrics := NewMetrics(store)
+	b := []byte("")
 	type want struct {
-		statusCode int
-		// response    string
-		// contentType string
+		code        int
+		response    string
+		contentType string
 	}
-
+	type args struct {
+		body io.Reader
+		w    http.ResponseWriter
+		req  *http.Request
+	}
 	tests := []struct {
-		name    string
-		ms      *Metrics
-		request string
-		want    want
+		name string
+		ms   *Metrics
+		args args
+		want want
 	}{
 		{
-			ms:      &memSt,
-			name:    "negative test #1",
-			request: "/update/",
+			name: "empty request body",
+			ms:   &metrics,
+			args: args{
+				body: bytes.NewReader(b),
+			},
 			want: want{
-				statusCode: 400,
+				code: 400,
+			},
+		},
+		{
+			name: "positiv test",
+			ms:   &metrics,
+			args: args{
+				body: bytes.NewReader([]byte(`{"id":"some","type":"gauge","value":100}`)),
+			},
+			want: want{
+				code: 200,
 			},
 		},
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			req := httptest.NewRequest(http.MethodPost, tt.request, nil)
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			request := httptest.NewRequest(http.MethodPost, "/update/", test.args.body)
+			// создаём новый Recorder
 			w := httptest.NewRecorder()
-			tt.ms.SetMetricsJSON(w, req)
-			result := w.Result()
-			result.Body.Close()
-			assert.Equal(t, tt.want.statusCode, result.StatusCode)
+			test.ms.SetMetricsJSON(w, request)
+
+			res := w.Result()
+
+			// tt.ms.SetMetricsJSON(tt.args.w, tt.args.req)
+			// res := tt.args.w.Result()
+			assert.Equal(t, test.want.code, res.StatusCode)
 		})
 	}
 }
