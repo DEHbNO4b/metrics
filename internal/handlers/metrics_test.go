@@ -12,7 +12,7 @@ import (
 )
 
 func TestMetrics_SetMetricsJSON(t *testing.T) {
-	store := maindb.NewRAMStore(maindb.StoreConfig{})
+	store := maindb.NewRAMStore(maindb.StoreConfig{}, maindb.NewFileDB(""))
 	metrics := NewMetrics(store)
 	b := []byte("")
 	type want struct {
@@ -63,7 +63,7 @@ func TestMetrics_SetMetricsJSON(t *testing.T) {
 }
 
 func TestMetrics_GetMetricJSON(t *testing.T) {
-	store := maindb.NewRAMStore(maindb.StoreConfig{})
+	store := maindb.NewRAMStore(maindb.StoreConfig{}, maindb.NewFileDB(""))
 	metrics := NewMetrics(store)
 	type want struct {
 		code int

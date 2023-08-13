@@ -8,7 +8,7 @@ import (
 )
 
 func TestRamStore_GetMetric(t *testing.T) {
-	store := NewRAMStore(StoreConfig{})
+	store := NewRAMStore(StoreConfig{}, NewFileDB(""))
 	type args struct {
 		met data.Metrics
 	}

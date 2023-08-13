@@ -1,10 +1,6 @@
 package maindb
 
 import (
-	"bufio"
-	"encoding/json"
-	"os"
-	"path/filepath"
 	"strconv"
 	"sync"
 	"time"
@@ -12,6 +8,7 @@ import (
 	"github.com/DEHbNO4b/metrics/internal/data"
 	"github.com/DEHbNO4b/metrics/internal/interfaces"
 	logger "github.com/DEHbNO4b/metrics/internal/loger"
+	"go.uber.org/zap"
 )
 
 type Gauge struct {
@@ -36,15 +33,15 @@ type RAMStore struct {
 	sync.RWMutex
 }
 
-func NewRAMStore(config StoreConfig) *RAMStore {
+func NewRAMStore(config StoreConfig, db interfaces.Database) *RAMStore {
 	g := make(map[string]float64)
 	c := make(map[string]int64)
-	ms := RAMStore{Config: config, Gauges: g, Counters: c}
+	rs := RAMStore{Config: config, Gauges: g, Counters: c, DB: db}
 	if config.Restore {
-		ms.loadFromStoreFile()
+		rs.loadFromStoreFile()
 	}
-	go ms.storeSchedule()
-	return &ms
+	go rs.storeSchedule()
+	return &rs
 }
 func (rs *RAMStore) SetMetric(metric data.Metrics) error {
 	switch metric.MType {
@@ -112,22 +109,20 @@ func (rs *RAMStore) GeMetricsData() []data.Metrics {
 	return metrics
 }
 func (rs *RAMStore) loadFromStoreFile() error {
-	file, err := os.OpenFile(filepath.FromSlash(rs.Config.Filepath), os.O_RDONLY, 0666)
+
+	metrics, err := rs.DB.ReadMetrics()
 	if err != nil {
-		logger.Log.Sugar().Error("unable to open storage file, filepath:  ", rs.Config.Filepath, err.Error())
+		logger.Log.Error("unable to load data from DB", zap.Error(err))
 		return err
 	}
-	defer file.Close()
-	scaner := bufio.NewScanner(file)
-	for scaner.Scan() {
-		metric := data.NewMetric()
-		line := scaner.Text()
-		err := json.Unmarshal([]byte(line), &metric)
-		if err != nil {
-			logger.Log.Sugar().Error("unable to unmarshal json", err.Error())
-			continue
+	for _, metric := range metrics {
+		// rs.SetMetric(metric)
+		switch metric.MType {
+		case "gauge":
+			rs.Gauges[metric.ID] = *metric.Value
+		case "counter":
+			rs.Counters[metric.ID] = *metric.Delta
 		}
-		rs.SetMetric(metric)
 	}
 	return nil
 }
@@ -146,26 +141,3 @@ func (rs *RAMStore) StoreData() error {
 	}
 	return nil
 }
-
-// 	file, err := os.OpenFile(filepath.FromSlash(rs.Config.Filepath), os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0666)
-// 	if err != nil {
-// 		logger.Log.Sugar().Error("unable to open|create storage file ", err.Error())
-// 		return err
-// 	}
-// 	data := rs.GeMetricsData()
-// 	for _, el := range data {
-
-// 		metric, err := json.Marshal(el)
-// 		if err != nil {
-// 			logger.Log.Sugar().Error("unable to encode metric ", err.Error())
-// 			continue
-// 		}
-// 		_, err = file.WriteString(string(metric) + "\r\n")
-// 		if err != nil {
-// 			logger.Log.Sugar().Error("unable to write data to file ", err.Error())
-// 			continue
-// 		}
-// 	}
-// 	file.Close()
-// 	return nil
-// }

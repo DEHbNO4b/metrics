@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/DEHbNO4b/metrics/internal/handlers"
+	"github.com/DEHbNO4b/metrics/internal/interfaces"
 	logger "github.com/DEHbNO4b/metrics/internal/loger"
 	"github.com/DEHbNO4b/metrics/internal/maindb"
 	"github.com/DEHbNO4b/metrics/internal/middleware"
@@ -17,6 +18,7 @@ func main() {
 	if err := logger.Initialize("info"); err != nil {
 		panic(err)
 	}
+	var db interfaces.Database
 	parseFlag()
 	sqlDB := maindb.NewPostgresDB(dsn)
 	defer sqlDB.DB.Close()
@@ -28,8 +30,12 @@ func main() {
 		Filepath:      filestoragepath,
 		Restore:       restore,
 	}
-	rs := maindb.NewRAMStore(sc)
-	rs.DB = filedb
+	if dsn != "" {
+		db = sqlDB
+	} else {
+		db = filedb
+	}
+	rs := maindb.NewRAMStore(sc, db)
 	defer rs.StoreData()
 	mh := handlers.NewMetrics(rs)
 	mh.Pinger = sqlDB
