@@ -30,7 +30,7 @@ func main() {
 		Filepath:      filestoragepath,
 		Restore:       restore,
 	}
-	if dsn != "" {
+	if sqlDB.Ping() == nil {
 		db = sqlDB
 	} else {
 		db = filedb
