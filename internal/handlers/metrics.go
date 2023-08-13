@@ -24,7 +24,7 @@ func NewMetrics(m interfaces.MetricsStorage) Metrics {
 	return ms
 }
 
-func (ms *Metrics) SetMetricsJSON(w http.ResponseWriter, req *http.Request) {
+func (ms *Metrics) SetMetricJSON(w http.ResponseWriter, req *http.Request) {
 	m := data.Metrics{}
 	dec := json.NewDecoder(req.Body)
 	err := dec.Decode(&m)
@@ -35,9 +35,26 @@ func (ms *Metrics) SetMetricsJSON(w http.ResponseWriter, req *http.Request) {
 	}
 	err = ms.MemStorage.SetMetric(m)
 	if err != nil {
-		logger.Log.Sugar().Error(err.Error())
+		http.Error(w, "unable to set metrics to RAM", http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+}
+func (ms *Metrics) SetMetricsJSON(w http.ResponseWriter, r *http.Request) {
+	metrics := make([]data.Metrics, 0, 30)
+	dec := json.NewDecoder(r.Body)
+	err := dec.Decode(&metrics)
+	if err != nil {
+		logger.Log.Info("unable to decode json from req.Body", zap.String("err", err.Error()))
 		http.Error(w, "Bad request", http.StatusBadRequest)
 		return
+	}
+	for _, metric := range metrics {
+		err = ms.MemStorage.SetMetric(metric)
+		if err != nil {
+			http.Error(w, "unable to set metrics to RAM", http.StatusInternalServerError)
+			return
+		}
 	}
 	w.WriteHeader(http.StatusOK)
 }
