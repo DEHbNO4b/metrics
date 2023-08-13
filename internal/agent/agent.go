@@ -67,7 +67,7 @@ func (a Agent) sendMetrics(metrics []data.Metrics) {
 	}
 	compressor.Write(buf.Bytes())
 	compressor.Close()
-	req, err := http.NewRequest(http.MethodPost, a.url+"/update/", &compressed) // (1)
+	req, err := http.NewRequest(http.MethodPost, a.url+"/updates/", &compressed) // (1)
 	if err != nil {
 		logger.Log.Sugar().Error(err.Error())
 		return

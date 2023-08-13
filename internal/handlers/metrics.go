@@ -41,6 +41,7 @@ func (ms *Metrics) SetMetricJSON(w http.ResponseWriter, req *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 func (ms *Metrics) SetMetricsJSON(w http.ResponseWriter, r *http.Request) {
+	logger.Log.Info("in set metrics handler")
 	metrics := make([]data.Metrics, 0, 30)
 	dec := json.NewDecoder(r.Body)
 	err := dec.Decode(&metrics)
