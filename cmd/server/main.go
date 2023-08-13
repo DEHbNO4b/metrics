@@ -10,6 +10,7 @@ import (
 	"github.com/DEHbNO4b/metrics/internal/maindb"
 	"github.com/DEHbNO4b/metrics/internal/middleware"
 	"github.com/go-chi/chi/v5"
+	_ "github.com/golang/mock/mockgen/model"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"go.uber.org/zap"
 )

@@ -35,7 +35,7 @@ func (ms *Metrics) SetMetricJSON(w http.ResponseWriter, req *http.Request) {
 	}
 	err = ms.MemStorage.SetMetric(m)
 	if err != nil {
-		http.Error(w, "unable to set metrics to RAM", http.StatusInternalServerError)
+		http.Error(w, "unable to set metrics to RAM", http.StatusBadRequest)
 		return
 	}
 	w.WriteHeader(http.StatusOK)
@@ -53,7 +53,7 @@ func (ms *Metrics) SetMetricsJSON(w http.ResponseWriter, r *http.Request) {
 	for _, metric := range metrics {
 		err = ms.MemStorage.SetMetric(metric)
 		if err != nil {
-			http.Error(w, "unable to set metrics to RAM", http.StatusInternalServerError)
+			http.Error(w, "unable to set metrics to RAM", http.StatusBadRequest)
 			return
 		}
 	}
@@ -65,6 +65,7 @@ func (ms *Metrics) GetMetricJSON(w http.ResponseWriter, r *http.Request) {
 	err := dec.Decode(&m)
 	if err != nil {
 		http.Error(w, "unable to decode teq body", http.StatusBadRequest)
+		return
 	}
 
 	m, err = ms.MemStorage.GetMetric(m)
