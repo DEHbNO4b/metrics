@@ -23,6 +23,7 @@ func NewFileDB(name string) *FileDB {
 	return &FileDB{File: file}
 }
 func (f *FileDB) WriteMetrics(data []data.Metrics) error {
+	logger.Log.Info("in write metrics FileDB", zap.String("file", f.File.Name()))
 	for _, metric := range data {
 		err := f.Add(metric)
 		if err != nil {

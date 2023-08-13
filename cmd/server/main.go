@@ -14,17 +14,17 @@ import (
 	"go.uber.org/zap"
 )
 
+var db interfaces.Database
+
 func main() {
 	if err := logger.Initialize("info"); err != nil {
 		panic(err)
 	}
-	var db interfaces.Database
 	parseFlag()
 	sqlDB := maindb.NewPostgresDB(dsn)
 	defer sqlDB.DB.Close()
 	filedb := maindb.NewFileDB(filestoragepath)
 	defer filedb.File.Close()
-	r := chi.NewRouter()
 	sc := maindb.StoreConfig{
 		StoreInterval: time.Duration(storeInterval) * time.Second,
 		Filepath:      filestoragepath,
@@ -39,6 +39,7 @@ func main() {
 	defer rs.StoreData()
 	mh := handlers.NewMetrics(rs)
 	mh.Pinger = sqlDB
+	r := chi.NewRouter()
 	r.Use(middleware.WithLogging)
 	r.Use(middleware.GzipHandle)
 	r.Post(`/update/{type}/{name}/{value}`, http.HandlerFunc(mh.SetMetricsURL))

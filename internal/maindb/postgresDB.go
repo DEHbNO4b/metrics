@@ -15,7 +15,8 @@ var createMetricsTable string = `CREATE TABLE IF NOT EXISTS metrics(
 									delta integer,
 									value double precision
 									);`
-var clearMetricsTable string = `delete from metrics;`
+
+// var clearMetricsTable string = `delete from metrics;`
 
 type PostgresDB struct {
 	DB *sql.DB
@@ -41,7 +42,10 @@ func (pdb *PostgresDB) WriteMetrics(metrics []data.Metrics) error {
 	if err := pdb.DB.Ping(); err != nil {
 		return err
 	}
-	pdb.DB.Exec(clearMetricsTable)
+	_, err := pdb.DB.Exec("DELETE FROM metrics")
+	if err != nil {
+		logger.Log.Error("unable to clear metric table ", zap.Error(err))
+	}
 	for _, metric := range metrics {
 		pdb.Add(metric)
 	}
