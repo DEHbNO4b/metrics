@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestMetrics_SetMetricsJSON(t *testing.T) {
+func TestMetrics_SetMetricJSON(t *testing.T) {
 	store := maindb.NewRAMStore(maindb.StoreConfig{}, maindb.NewFileDB(""))
 	metrics := NewMetrics(store)
 	b := []byte("")
@@ -54,7 +54,7 @@ func TestMetrics_SetMetricsJSON(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			request := httptest.NewRequest(http.MethodPost, "/update/", test.args.body)
 			w := httptest.NewRecorder()
-			test.ms.SetMetricsJSON(w, request)
+			test.ms.SetMetricJSON(w, request)
 			res := w.Result()
 			assert.Equal(t, test.want.code, res.StatusCode)
 			res.Body.Close()
