@@ -56,7 +56,7 @@ func (pdb *PostgresDB) ReadMetrics() ([]data.Metrics, error) {
 		value float64
 		delta int64
 	)
-	rows, err := pdb.DB.Query(`SELECT id,type,delta,value from gauges;`)
+	rows, err := pdb.DB.Query(`SELECT id,type,delta,value from metrics;`)
 	if err != nil {
 		logger.Log.Error("unable to get metrics from db", zap.Error(err))
 		return metrics, err
@@ -79,7 +79,7 @@ func (pdb *PostgresDB) ReadMetrics() ([]data.Metrics, error) {
 	return metrics, nil
 }
 func (pdb *PostgresDB) Add(metric data.Metrics) error {
-	_, err := pdb.DB.Exec(`insert into gauges (id,type,delta,value)	values($1,$2,$3,$4);`, metric.ID, metric.MType, *metric.Delta, *metric.Value)
+	_, err := pdb.DB.Exec(`insert into metrics (id,type,delta,value)	values($1,$2,$3,$4);`, metric.ID, metric.MType, *metric.Delta, *metric.Value)
 	if err != nil {
 		logger.Log.Error("cannot set gauge to db", zap.Error(err))
 		return err
