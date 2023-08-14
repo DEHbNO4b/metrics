@@ -10,7 +10,7 @@ var ErrNotContains error = errors.New("not contains this metric")
 var ErrWrongType error = errors.New("wrong metric type")
 
 type MetricsStorage interface {
-	GetMetrics() []string
+	GetMetrics() []data.Metrics
 	SetMetric(data.Metrics) error
 	GetMetric(data.Metrics) (data.Metrics, error)
 }

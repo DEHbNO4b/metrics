@@ -33,6 +33,11 @@ func NewPostgresDB(dsn string) *PostgresDB {
 	db.Exec(createMetricsTable)
 	return &PostgresDB{DB: db}
 }
+func (pdb *PostgresDB) Close() {
+	if pdb.DB != nil {
+		pdb.DB.Close()
+	}
+}
 func (pdb *PostgresDB) Ping() bool {
 	if pdb.DB == nil {
 		logger.Log.Error("database object is nil")

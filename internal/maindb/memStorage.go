@@ -1,9 +1,7 @@
 package maindb
 
 import (
-	"strconv"
 	"sync"
-	"time"
 
 	"github.com/DEHbNO4b/metrics/internal/data"
 	"github.com/DEHbNO4b/metrics/internal/interfaces"
@@ -18,13 +16,8 @@ type Counter struct {
 	Name string
 	Val  int64
 }
-type StoreConfig struct {
-	Filepath      string
-	StoreInterval time.Duration
-	Restore       bool
-}
-type RAMStore struct {
-	Config   StoreConfig
+
+type MemStorage struct {
 	Gauges   map[string]float64
 	Counters map[string]int64
 	SqlDB    interfaces.Database
@@ -32,14 +25,14 @@ type RAMStore struct {
 	sync.RWMutex
 }
 
-func NewRAMStore(config StoreConfig) *RAMStore {
+func NewMemStorage() *MemStorage {
 	g := make(map[string]float64)
 	c := make(map[string]int64)
-	rs := RAMStore{Config: config, Gauges: g, Counters: c}
+	rs := MemStorage{Gauges: g, Counters: c}
 	return &rs
 }
 
-func (rs *RAMStore) SetMetric(metric data.Metrics) error {
+func (rs *MemStorage) SetMetric(metric data.Metrics) error {
 	switch metric.MType {
 	case "gauge":
 		rs.Lock()
@@ -47,24 +40,34 @@ func (rs *RAMStore) SetMetric(metric data.Metrics) error {
 		rs.Unlock()
 	case "counter":
 		rs.Lock()
-		rs.Counters[metric.ID] = rs.Counters[metric.ID] + *metric.Delta
+		rs.Counters[metric.ID] = *metric.Delta
 		rs.Unlock()
 	default:
 		return interfaces.ErrWrongType
 	}
 	return nil
 }
-func (rs *RAMStore) GetMetrics() []string {
-	m := make([]string, 0, 40)
+func (rs *MemStorage) GetMetrics() []data.Metrics {
+
+	metrics := make([]data.Metrics, 0, 30)
 	for name, val := range rs.Gauges {
-		m = append(m, name+":"+strconv.FormatFloat(val, 'f', -1, 64))
+		metric := data.NewMetric()
+		metric.ID = name
+		metric.MType = "gauge"
+		*metric.Value = val
+		metrics = append(metrics, metric)
 	}
 	for name, val := range rs.Counters {
-		m = append(m, name+":"+strconv.FormatInt(val, 10))
+		metric := data.NewMetric()
+		metric.ID = name
+		metric.MType = "counter"
+		*metric.Delta = val
+		metrics = append(metrics, metric)
+
 	}
-	return m
+	return metrics
 }
-func (rs *RAMStore) GetMetric(met data.Metrics) (data.Metrics, error) {
+func (rs *MemStorage) GetMetric(met data.Metrics) (data.Metrics, error) {
 	// m := data.Metrics{}
 	switch met.MType {
 	case "gauge":
@@ -86,7 +89,7 @@ func (rs *RAMStore) GetMetric(met data.Metrics) (data.Metrics, error) {
 	return met, nil
 }
 
-func (rs *RAMStore) GeMetricsData() []data.Metrics {
+func (rs *MemStorage) GeMetricsData() []data.Metrics {
 	metrics := make([]data.Metrics, 0, 30)
 	for name, val := range rs.Gauges {
 		m := data.NewMetric()
@@ -104,30 +107,18 @@ func (rs *RAMStore) GeMetricsData() []data.Metrics {
 	}
 	return metrics
 }
-func (rs *RAMStore) LoadFromStoreFile() error {
-	var db interfaces.Database
-	if rs.SqlDB.Ping() {
-		db = rs.SqlDB
-	} else {
-		db = rs.FileDB
-	}
-	metrics, err := db.ReadMetrics()
-	if err != nil {
-		// logger.Log.Error("unable to load data from DB", zap.Error(err))
-		return err
-	}
-	for _, metric := range metrics {
-		switch metric.MType {
+func (rs *MemStorage) SetMetrics(m []data.Metrics) error {
+	for _, el := range m {
+		switch el.MType {
 		case "gauge":
-			rs.Gauges[metric.ID] = *metric.Value
+			rs.Gauges[el.ID] = *el.Value
 		case "counter":
-			rs.Counters[metric.ID] = *metric.Delta
+			rs.Counters[el.ID] = *el.Delta
 		}
 	}
 	return nil
 }
-
-func (rs *RAMStore) StoreData() error {
+func (rs *MemStorage) StoreData() error {
 	var db interfaces.Database
 	if rs.SqlDB.Ping() {
 		db = rs.SqlDB

@@ -1,0 +1,3 @@
+{"id":"MSpanInuse","type":"gauge","delta":0,"value":24480}
+{"id":"GetSet214","type":"gauge","delta":0,"value":274677.0475536283}
+{"id":"GetSet253","type":"counter","delta":1316102277,"value":0}

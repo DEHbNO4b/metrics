@@ -23,7 +23,8 @@ func Initialize(level string) error {
 	// устанавливаем уровень
 	cfg.Level = lvl
 	// создаём логер на основе конфигурации
-	zl, err := cfg.Build()
+	// zl, err := cfg.Build()
+	zl, err := zap.NewDevelopment()
 	if err != nil {
 		return err
 	}

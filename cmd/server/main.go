@@ -2,10 +2,9 @@ package main
 
 import (
 	"net/http"
-	"time"
 
+	"github.com/DEHbNO4b/metrics/internal/expert"
 	"github.com/DEHbNO4b/metrics/internal/handlers"
-	"github.com/DEHbNO4b/metrics/internal/interfaces"
 	logger "github.com/DEHbNO4b/metrics/internal/loger"
 	"github.com/DEHbNO4b/metrics/internal/maindb"
 	"github.com/DEHbNO4b/metrics/internal/middleware"
@@ -15,45 +14,36 @@ import (
 	"go.uber.org/zap"
 )
 
-var db interfaces.Database
-
 func main() {
 	if err := logger.Initialize("info"); err != nil {
 		panic(err)
 	}
 	parseFlag()
 	sqlDB := maindb.NewPostgresDB(dsn)
-	if sqlDB != nil {
-		defer sqlDB.DB.Close()
+	defer sqlDB.Close()
+
+	config := expert.StoreConfig{
+		StoreInterval: storeInterval,
+		Filepath:      filestoragepath,
+		Restore:       restore,
 	}
-	filedb := maindb.NewFileDB(filestoragepath)
-	sc := maindb.StoreConfig{
-		StoreInterval: time.Duration(storeInterval) * time.Second,
-		// Filepath:      filestoragepath,
-		// Restore: restore,
-	}
-	rs := maindb.NewRAMStore(sc)
-	rs.SqlDB = sqlDB
-	rs.FileDB = filedb
-	defer rs.StoreData()
-	if restore {
-		rs.LoadFromStoreFile()
-	}
-	go func() {
-		rs.StoreData()
-		time.Sleep(time.Duration(storeInterval) * time.Second)
-	}()
-	mh := handlers.NewMetrics(rs)
-	mh.Pinger = sqlDB
+
+	withDB := selectStore(dsn, filestoragepath)
+	expert := expert.NewExpert(expert.WithConfig(config), expert.WithRAM(maindb.NewMemStorage()), withDB)
+	defer expert.StoreData()
+
+	mh := handlers.NewMetrics(expert)
+	ph := handlers.NewPinger(sqlDB)
+	// mh.Pinger = sqlDB
 	r := chi.NewRouter()
 	r.Use(middleware.WithLogging)
 	r.Use(middleware.GzipHandle)
 	r.Post(`/update/{type}/{name}/{value}`, http.HandlerFunc(mh.SetMetricsURL))
 	r.Get(`/value/{type}/{name}`, http.HandlerFunc(mh.GetMetricURL))
 	r.Post(`/update/`, http.HandlerFunc(mh.SetMetricJSON))
-	r.Post(`/updates/`, http.HandlerFunc(mh.SetMetricsJSON))
+	// r.Post(`/updates/`, http.HandlerFunc(mh.SetMetricsJSON))
 	r.Post(`/value/`, http.HandlerFunc(mh.GetMetricJSON))
-	r.Get(`/ping`, http.HandlerFunc(mh.PingDB))
+	r.Get(`/ping`, http.HandlerFunc(ph.PingDB))
 	r.Get(`/`, mh.GetMetrics)
 	logger.Log.Info("Running server", zap.String("address", runAddr))
 	err := http.ListenAndServe(runAddr, r)
@@ -62,6 +52,9 @@ func main() {
 	}
 }
 
-// func configureStore(){
-
-// }
+func selectStore(dsn string, f string) expert.ExpertConfiguration {
+	if dsn != "" {
+		return expert.WithDatabase(maindb.NewPostgresDB(dsn))
+	}
+	return expert.WithDatabase(maindb.NewFileDB(f))
+}

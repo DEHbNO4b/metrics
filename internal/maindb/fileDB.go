@@ -26,9 +26,10 @@ func NewFileDB(name string) *FileDB {
 	return &FileDB{filepath: name}
 }
 func (f *FileDB) WriteMetrics(data []data.Metrics) error {
+	logger.Log.Info("in fileDB WriteMetrics()")
 	file, err := os.OpenFile(filepath.FromSlash(f.filepath), os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0666)
 	if err != nil {
-		logger.Log.Sugar().Error("unable to open|create storage file ", err.Error())
+		logger.Log.Error("unable to open|create storage file ", zap.Error(err))
 		return err
 	}
 	defer file.Close()
@@ -48,6 +49,7 @@ func (f *FileDB) WriteMetrics(data []data.Metrics) error {
 }
 
 func (f *FileDB) ReadMetrics() ([]data.Metrics, error) {
+	logger.Log.Info("in fileDB ReadMetrics()")
 	metrics := make([]data.Metrics, 0, 10)
 	file, err := os.OpenFile(filepath.FromSlash(f.filepath), os.O_RDONLY, 0666)
 	if err != nil {
