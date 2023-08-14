@@ -21,7 +21,6 @@ func parseFlag() {
 	flag.IntVar(&storeInterval, "i", 300, "data store interval")
 	flag.StringVar(&filestoragepath, "f", "/tmp/metrics-db.json", "file storage path")
 	flag.StringVar(&dsn, "d", "", "dsn for postgres")
-	// flag.StringVar(&dsn, "d", "", "dsn for postgres")
 	flag.BoolVar(&restore, "r", true, "restore_flag")
 	flag.Parse()
 	if ep := os.Getenv("ADDRESS"); ep != "" {
@@ -49,5 +48,4 @@ func parseFlag() {
 		}
 		restore = re
 	}
-	// storeConfig = data.StoreConfig{StoreInterval: time.Duration(storeInterval) * time.Second, Filepath: filestoragepath, Restore: restore}
 }

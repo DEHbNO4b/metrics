@@ -33,16 +33,13 @@ type RAMStore struct {
 	sync.RWMutex
 }
 
-func NewRAMStore(config StoreConfig, db interfaces.Database) *RAMStore {
+func NewRAMStore(config StoreConfig) *RAMStore {
 	g := make(map[string]float64)
 	c := make(map[string]int64)
-	rs := RAMStore{Config: config, Gauges: g, Counters: c, DB: db}
-	if config.Restore {
-		rs.loadFromStoreFile()
-	}
-	go rs.storeSchedule()
+	rs := RAMStore{Config: config, Gauges: g, Counters: c}
 	return &rs
 }
+
 func (rs *RAMStore) SetMetric(metric data.Metrics) error {
 	switch metric.MType {
 	case "gauge":
@@ -108,7 +105,7 @@ func (rs *RAMStore) GeMetricsData() []data.Metrics {
 	}
 	return metrics
 }
-func (rs *RAMStore) loadFromStoreFile() error {
+func (rs *RAMStore) LoadFromStoreFile() error {
 
 	metrics, err := rs.DB.ReadMetrics()
 	if err != nil {
@@ -126,7 +123,7 @@ func (rs *RAMStore) loadFromStoreFile() error {
 	}
 	return nil
 }
-func (rs *RAMStore) storeSchedule() {
+func (rs *RAMStore) StoreSchedule() {
 	for {
 		rs.StoreData()
 		time.Sleep(rs.Config.StoreInterval)

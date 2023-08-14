@@ -23,21 +23,33 @@ func main() {
 	}
 	parseFlag()
 	sqlDB := maindb.NewPostgresDB(dsn)
-	defer sqlDB.DB.Close()
+	if sqlDB != nil {
+		defer sqlDB.DB.Close()
+	}
 	filedb := maindb.NewFileDB(filestoragepath)
-	defer filedb.File.Close()
+	if filedb != nil {
+		defer filedb.File.Close()
+	}
+
 	sc := maindb.StoreConfig{
 		StoreInterval: time.Duration(storeInterval) * time.Second,
-		Filepath:      filestoragepath,
-		Restore:       restore,
+		// Filepath:      filestoragepath,
+		// Restore: restore,
 	}
-	if sqlDB.Ping() == nil {
-		db = sqlDB
+	rs := maindb.NewRAMStore(sc)
+	if sqlDB != nil {
+		rs.DB = sqlDB
 	} else {
-		db = filedb
+		rs.DB = filedb
 	}
-	rs := maindb.NewRAMStore(sc, db)
 	defer rs.StoreData()
+	if restore {
+		rs.LoadFromStoreFile()
+	}
+	go func() {
+		rs.StoreData()
+		time.Sleep(time.Duration(storeInterval) * time.Second)
+	}()
 	mh := handlers.NewMetrics(rs)
 	mh.Pinger = sqlDB
 	r := chi.NewRouter()
@@ -56,3 +68,7 @@ func main() {
 		panic(err)
 	}
 }
+
+// func configureStore(){
+
+// }

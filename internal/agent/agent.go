@@ -39,14 +39,14 @@ func (a Agent) ReadRuntimeMetrics(interval int) {
 func (a Agent) PullMetrics(interval int) {
 	var reportInterval = time.Duration(interval) * time.Second
 	for {
-		// for _, el := range a.gauges {
-		// 	el.ReadValue(a.m)
-		// 	go a.sendMetric(el)
-		// }
+		for _, el := range a.gauges {
+			el.ReadValue(a.m)
+			go a.sendMetric(el)
+		}
 		d := int64(1)
-		// go a.sendMetric(data.Metrics{ID: "PollCount", MType: "counter", Delta: &d})
-		a.gauges = append(a.gauges, data.Metrics{ID: "PollCount", MType: "counter", Delta: &d})
-		go a.sendMetrics(a.gauges)
+		go a.sendMetric(data.Metrics{ID: "PollCount", MType: "counter", Delta: &d})
+		// a.gauges = append(a.gauges, data.Metrics{ID: "PollCount", MType: "counter", Delta: &d})
+		// go a.sendMetrics(a.gauges)
 		time.Sleep(reportInterval)
 	}
 

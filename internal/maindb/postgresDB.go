@@ -23,11 +23,13 @@ type PostgresDB struct {
 }
 
 func NewPostgresDB(dsn string) *PostgresDB {
-
+	if dsn == "" {
+		return nil
+	}
 	db, err := sql.Open("pgx", dsn)
 	if err != nil {
 		logger.Log.Error("cannot open db", zap.Error(err))
-		return &PostgresDB{}
+		return nil
 	}
 	db.Exec(createMetricsTable)
 	return &PostgresDB{DB: db}
