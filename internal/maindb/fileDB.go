@@ -26,7 +26,7 @@ func NewFileDB(name string) *FileDB {
 	return &FileDB{filepath: name}
 }
 func (f *FileDB) WriteMetrics(data []data.Metrics) error {
-	file, err := os.OpenFile(filepath.FromSlash(f.filepath), os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0666)
+	file, err := os.OpenFile(filepath.FromSlash(f.filepath), os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0666)
 	if err != nil {
 		logger.Log.Sugar().Error("unable to open|create storage file ", err.Error())
 		return err

@@ -105,13 +105,12 @@ func (rs *RAMStore) GeMetricsData() []data.Metrics {
 }
 func (rs *RAMStore) LoadFromStoreFile() error {
 
-	metrics, _ := rs.DB.ReadMetrics()
-	// if err != nil {
-	// 	logger.Log.Error("unable to load data from DB", zap.Error(err))
-	// 	return err
-	// }
+	metrics, err := rs.DB.ReadMetrics()
+	if err != nil {
+		// logger.Log.Error("unable to load data from DB", zap.Error(err))
+		return err
+	}
 	for _, metric := range metrics {
-		// rs.SetMetric(metric)
 		switch metric.MType {
 		case "gauge":
 			rs.Gauges[metric.ID] = *metric.Value
@@ -121,12 +120,13 @@ func (rs *RAMStore) LoadFromStoreFile() error {
 	}
 	return nil
 }
-func (rs *RAMStore) StoreSchedule() {
-	for {
-		rs.StoreData()
-		time.Sleep(rs.Config.StoreInterval)
-	}
-}
+
+// func (rs *RAMStore) StoreSchedule() {
+// 	for {
+// 		rs.StoreData()
+// 		time.Sleep(rs.Config.StoreInterval)
+// 	}
+// }
 
 func (rs *RAMStore) StoreData() error {
 	data := rs.GeMetricsData()
