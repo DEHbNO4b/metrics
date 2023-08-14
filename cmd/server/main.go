@@ -27,10 +27,6 @@ func main() {
 		defer sqlDB.DB.Close()
 	}
 	filedb := maindb.NewFileDB(filestoragepath)
-	if filedb != nil {
-		defer filedb.File.Close()
-	}
-
 	sc := maindb.StoreConfig{
 		StoreInterval: time.Duration(storeInterval) * time.Second,
 		// Filepath:      filestoragepath,
