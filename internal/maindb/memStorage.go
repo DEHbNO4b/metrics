@@ -20,8 +20,6 @@ type Counter struct {
 type MemStorage struct {
 	Gauges   map[string]float64
 	Counters map[string]int64
-	SqlDB    interfaces.Database
-	FileDB   interfaces.Database
 	sync.RWMutex
 }
 
@@ -115,20 +113,6 @@ func (rs *MemStorage) SetMetrics(m []data.Metrics) error {
 		case "counter":
 			rs.Counters[el.ID] = *el.Delta
 		}
-	}
-	return nil
-}
-func (rs *MemStorage) StoreData() error {
-	var db interfaces.Database
-	if rs.SqlDB.Ping() {
-		db = rs.SqlDB
-	} else {
-		db = rs.FileDB
-	}
-	data := rs.GeMetricsData()
-	err := db.WriteMetrics(data)
-	if err != nil {
-		return err
 	}
 	return nil
 }

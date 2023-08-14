@@ -41,7 +41,7 @@ func main() {
 	r.Post(`/update/{type}/{name}/{value}`, http.HandlerFunc(mh.SetMetricsURL))
 	r.Get(`/value/{type}/{name}`, http.HandlerFunc(mh.GetMetricURL))
 	r.Post(`/update/`, http.HandlerFunc(mh.SetMetricJSON))
-	// r.Post(`/updates/`, http.HandlerFunc(mh.SetMetricsJSON))
+	r.Post(`/updates/`, http.HandlerFunc(mh.SetMetricsJSON))
 	r.Post(`/value/`, http.HandlerFunc(mh.GetMetricJSON))
 	r.Get(`/ping`, http.HandlerFunc(ph.PingDB))
 	r.Get(`/`, mh.GetMetrics)
