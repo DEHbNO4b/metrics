@@ -33,11 +33,8 @@ func main() {
 		// Restore: restore,
 	}
 	rs := maindb.NewRAMStore(sc)
-	if sqlDB != nil {
-		rs.DB = sqlDB
-	} else {
-		rs.DB = filedb
-	}
+	rs.SqlDB = sqlDB
+	rs.FileDB = filedb
 	defer rs.StoreData()
 	if restore {
 		rs.LoadFromStoreFile()

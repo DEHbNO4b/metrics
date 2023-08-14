@@ -27,7 +27,8 @@ type RAMStore struct {
 	Config   StoreConfig
 	Gauges   map[string]float64
 	Counters map[string]int64
-	DB       interfaces.Database
+	SqlDB    interfaces.Database
+	FileDB   interfaces.Database
 	sync.RWMutex
 }
 
@@ -104,8 +105,13 @@ func (rs *RAMStore) GeMetricsData() []data.Metrics {
 	return metrics
 }
 func (rs *RAMStore) LoadFromStoreFile() error {
-
-	metrics, err := rs.DB.ReadMetrics()
+	var db interfaces.Database
+	if rs.SqlDB.Ping() {
+		db = rs.SqlDB
+	} else {
+		db = rs.FileDB
+	}
+	metrics, err := db.ReadMetrics()
 	if err != nil {
 		// logger.Log.Error("unable to load data from DB", zap.Error(err))
 		return err
@@ -121,16 +127,15 @@ func (rs *RAMStore) LoadFromStoreFile() error {
 	return nil
 }
 
-// func (rs *RAMStore) StoreSchedule() {
-// 	for {
-// 		rs.StoreData()
-// 		time.Sleep(rs.Config.StoreInterval)
-// 	}
-// }
-
 func (rs *RAMStore) StoreData() error {
+	var db interfaces.Database
+	if rs.SqlDB.Ping() {
+		db = rs.SqlDB
+	} else {
+		db = rs.FileDB
+	}
 	data := rs.GeMetricsData()
-	err := rs.DB.WriteMetrics(data)
+	err := db.WriteMetrics(data)
 	if err != nil {
 		return err
 	}

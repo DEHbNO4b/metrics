@@ -81,3 +81,6 @@ func (f *FileDB) Add(m data.Metrics) error {
 	// }
 	return nil
 }
+func (f *FileDB) Ping() bool {
+	return true
+}

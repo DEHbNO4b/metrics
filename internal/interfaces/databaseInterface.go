@@ -6,4 +6,5 @@ type Database interface {
 	WriteMetrics([]data.Metrics) error
 	ReadMetrics() ([]data.Metrics, error)
 	Add(data.Metrics) error
+	Pinger
 }

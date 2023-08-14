@@ -1,5 +1,5 @@
 package interfaces
 
 type Pinger interface {
-	Ping() error
+	Ping() bool
 }
