@@ -7,8 +7,6 @@ import (
 
 	"github.com/DEHbNO4b/metrics/internal/data"
 	"github.com/DEHbNO4b/metrics/internal/interfaces"
-	logger "github.com/DEHbNO4b/metrics/internal/loger"
-	"go.uber.org/zap"
 )
 
 type Gauge struct {
@@ -107,11 +105,11 @@ func (rs *RAMStore) GeMetricsData() []data.Metrics {
 }
 func (rs *RAMStore) LoadFromStoreFile() error {
 
-	metrics, err := rs.DB.ReadMetrics()
-	if err != nil {
-		logger.Log.Error("unable to load data from DB", zap.Error(err))
-		return err
-	}
+	metrics, _ := rs.DB.ReadMetrics()
+	// if err != nil {
+	// 	logger.Log.Error("unable to load data from DB", zap.Error(err))
+	// 	return err
+	// }
 	for _, metric := range metrics {
 		// rs.SetMetric(metric)
 		switch metric.MType {
