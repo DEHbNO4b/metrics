@@ -46,7 +46,6 @@ func (rs *MemStorage) SetMetric(metric data.Metrics) error {
 	return nil
 }
 func (rs *MemStorage) GetMetrics() []data.Metrics {
-
 	metrics := make([]data.Metrics, 0, 30)
 	for name, val := range rs.Gauges {
 		metric := data.NewMetric()
@@ -66,7 +65,6 @@ func (rs *MemStorage) GetMetrics() []data.Metrics {
 	return metrics
 }
 func (rs *MemStorage) GetMetric(met data.Metrics) (data.Metrics, error) {
-	// m := data.Metrics{}
 	switch met.MType {
 	case "gauge":
 		val, ok := rs.Gauges[met.ID]
@@ -85,34 +83,4 @@ func (rs *MemStorage) GetMetric(met data.Metrics) (data.Metrics, error) {
 	}
 
 	return met, nil
-}
-
-func (rs *MemStorage) GeMetricsData() []data.Metrics {
-	metrics := make([]data.Metrics, 0, 30)
-	for name, val := range rs.Gauges {
-		m := data.NewMetric()
-		m.ID = name
-		m.MType = "gauge"
-		*m.Value = val
-		metrics = append(metrics, m)
-	}
-	for name, val := range rs.Counters {
-		m := data.NewMetric()
-		m.ID = name
-		m.MType = "counter"
-		*m.Delta = val
-		metrics = append(metrics, m)
-	}
-	return metrics
-}
-func (rs *MemStorage) SetMetrics(m []data.Metrics) error {
-	for _, el := range m {
-		switch el.MType {
-		case "gauge":
-			rs.Gauges[el.ID] = *el.Value
-		case "counter":
-			rs.Counters[el.ID] = *el.Delta
-		}
-	}
-	return nil
 }

@@ -67,7 +67,6 @@ func (ms *Metrics) GetMetricJSON(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "unable to decode teq body", http.StatusBadRequest)
 		return
 	}
-
 	m, err = ms.expert.GetMetric(m)
 	if err != nil && err == interfaces.ErrWrongType {
 		http.Error(w, "", http.StatusBadRequest)

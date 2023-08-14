@@ -12,17 +12,10 @@ import (
 )
 
 type FileDB struct {
-	// File *os.File
 	filepath string
 }
 
 func NewFileDB(name string) *FileDB {
-	// file, err := os.OpenFile(filepath.FromSlash(name), os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
-	// if err != nil {
-	// 	logger.Log.Error("unable to open|create storage file:  ", zap.Error(err))
-	// 	panic(err)
-	// 	// return nil
-	// }
 	return &FileDB{filepath: name}
 }
 func (f *FileDB) WriteMetrics(data []data.Metrics) error {
@@ -69,20 +62,4 @@ func (f *FileDB) ReadMetrics() ([]data.Metrics, error) {
 		metrics = append(metrics, metric)
 	}
 	return metrics, nil
-}
-func (f *FileDB) Add(m data.Metrics) error {
-	// metric, err := json.Marshal(m)
-	// if err != nil {
-	// 	logger.Log.Error("unable to encode metric ", zap.Error(err))
-	// 	return err
-	// }
-	// _, err = f.File.WriteString(string(metric) + "\r\n")
-	// if err != nil {
-	// 	logger.Log.Error("unable to write data to file ", zap.Error(err))
-	// 	return err
-	// }
-	return nil
-}
-func (f *FileDB) Ping() bool {
-	return true
 }

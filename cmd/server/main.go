@@ -21,20 +21,17 @@ func main() {
 	parseFlag()
 	sqlDB := maindb.NewPostgresDB(dsn)
 	defer sqlDB.Close()
-
+	ph := handlers.NewPinger(sqlDB) //хэндлер для пинга
 	config := expert.StoreConfig{
 		StoreInterval: storeInterval,
 		Filepath:      filestoragepath,
 		Restore:       restore,
 	}
-
-	withDB := selectStore(dsn, filestoragepath)
+	withDB := selectStore(dsn, filestoragepath) //выбор способа храниения данных (sqlDB | fileDB) для эксперта
 	expert := expert.NewExpert(expert.WithConfig(config), expert.WithRAM(maindb.NewMemStorage()), withDB)
-	defer expert.StoreData()
+	defer expert.StoreData() //сохранение данный при завершении программы
 
-	mh := handlers.NewMetrics(expert)
-	ph := handlers.NewPinger(sqlDB)
-	// mh.Pinger = sqlDB
+	mh := handlers.NewMetrics(expert) //хэндлер для приема и отправки метрик
 	r := chi.NewRouter()
 	r.Use(middleware.WithLogging)
 	r.Use(middleware.GzipHandle)
