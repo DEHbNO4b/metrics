@@ -8,7 +8,7 @@ import (
 )
 
 func TestRamStore_GetMetric(t *testing.T) {
-	store := NewRAMStore(StoreConfig{}, NewFileDB(""))
+	store := NewRAMStore(StoreConfig{})
 	type args struct {
 		met data.Metrics
 	}
@@ -34,7 +34,7 @@ func TestRamStore_GetMetric(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name:    "wrong type",
+			name:    "positive test",
 			ms:      store,
 			args:    args{met: data.Metrics{MType: "gauge", ID: "someName"}},
 			want:    data.Metrics{},

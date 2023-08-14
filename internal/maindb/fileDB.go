@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"encoding/json"
 	"os"
+	"path/filepath"
 
 	"github.com/DEHbNO4b/metrics/internal/data"
 	logger "github.com/DEHbNO4b/metrics/internal/loger"
@@ -15,7 +16,7 @@ type FileDB struct {
 }
 
 func NewFileDB(name string) *FileDB {
-	file, err := os.OpenFile(name, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	file, err := os.OpenFile(filepath.FromSlash(name), os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
 		logger.Log.Error("unable to open|create storage file:  ", zap.Error(err))
 		panic(err)
