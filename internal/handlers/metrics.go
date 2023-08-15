@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 	"strconv"
@@ -68,11 +69,11 @@ func (ms *Metrics) GetMetricJSON(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	m, err = ms.expert.GetMetric(m)
-	if err != nil && err == interfaces.ErrWrongType {
+	if err != nil && errors.Is(err, interfaces.ErrWrongType) {
 		http.Error(w, "", http.StatusBadRequest)
 		return
 	}
-	if err != nil && err == interfaces.ErrNotContains {
+	if err != nil && errors.Is(err, interfaces.ErrNotContains) {
 		http.Error(w, "", http.StatusNotFound)
 		return
 	}
@@ -148,11 +149,11 @@ func (ms *Metrics) GetMetricURL(w http.ResponseWriter, r *http.Request) {
 	name := chi.URLParam(r, "name")
 	metric := data.Metrics{ID: name, MType: t}
 	m, err := ms.expert.GetMetric(metric)
-	if err != nil && err == interfaces.ErrWrongType {
+	if err != nil && errors.Is(err, interfaces.ErrWrongType) {
 		http.Error(w, "", http.StatusBadRequest)
 		return
 	}
-	if err != nil && err == interfaces.ErrNotContains {
+	if err != nil && errors.Is(err, interfaces.ErrNotContains) {
 		http.Error(w, "", http.StatusNotFound)
 		return
 	}

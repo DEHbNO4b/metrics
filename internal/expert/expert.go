@@ -1,6 +1,7 @@
 package expert
 
 import (
+	"errors"
 	"time"
 
 	"github.com/DEHbNO4b/metrics/internal/data"
@@ -89,7 +90,7 @@ func (e *Expert) LoadFromDB() error {
 func (e *Expert) setMetricToRAM(m data.Metrics) error {
 	if m.MType == "counter" {
 		c, err := e.ram.GetMetric(m)
-		if err != nil && err == interfaces.ErrNotContains {
+		if err != nil && errors.Is(err, interfaces.ErrNotContains) {
 			return e.ram.SetMetric(m)
 		}
 		*m.Delta = *c.Delta + *m.Delta
