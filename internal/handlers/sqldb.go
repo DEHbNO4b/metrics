@@ -15,11 +15,11 @@ func NewPinger(p interfaces.Pinger) *Pinger {
 }
 func (p *Pinger) PingDB(w http.ResponseWriter, r *http.Request) {
 	if p.pinger == nil {
-		http.Error(w, "db is disconeccted", http.StatusInternalServerError)
+		http.Error(w, "db is disconected", http.StatusInternalServerError)
 		return
 	}
 	if !p.pinger.Ping() {
-		http.Error(w, "db disconeccted", http.StatusInternalServerError)
+		http.Error(w, "db disconected", http.StatusInternalServerError)
 		return
 	}
 	w.WriteHeader(http.StatusOK)
