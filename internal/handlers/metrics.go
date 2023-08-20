@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 	"strconv"
@@ -15,51 +16,66 @@ import (
 )
 
 type Metrics struct {
-	MemStorage interfaces.MetricsStorage
+	expert interfaces.MetricsStorage
+	Pinger interfaces.Pinger
 }
 
 func NewMetrics(m interfaces.MetricsStorage) Metrics {
-	ms := Metrics{MemStorage: m}
+	ms := Metrics{expert: m}
 	return ms
 }
 
-func (ms *Metrics) SetMetricsJSON(w http.ResponseWriter, req *http.Request) {
+func (ms *Metrics) SetMetricJSON(w http.ResponseWriter, req *http.Request) {
 	m := data.Metrics{}
 	dec := json.NewDecoder(req.Body)
 	err := dec.Decode(&m)
 	if err != nil {
-		logger.Log.Info("unable to decode json", zap.String("err", err.Error()))
+		logger.Log.Info("unable to decode json from req.Body", zap.String("err", err.Error()))
 		http.Error(w, "Bad request", http.StatusBadRequest)
 		return
 	}
-	err = ms.MemStorage.SetMetric(m)
+	err = ms.expert.SetMetric(m)
 	if err != nil {
-		logger.Log.Sugar().Error(err.Error())
+		http.Error(w, "unable to set metrics to RAM", http.StatusBadRequest)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+}
+func (ms *Metrics) SetMetricsJSON(w http.ResponseWriter, r *http.Request) {
+	logger.Log.Info("in set metrics handler")
+	metrics := make([]data.Metrics, 0, 30)
+	dec := json.NewDecoder(r.Body)
+	err := dec.Decode(&metrics)
+	if err != nil {
+		logger.Log.Info("unable to decode json from req.Body", zap.String("err", err.Error()))
 		http.Error(w, "Bad request", http.StatusBadRequest)
 		return
+	}
+	for _, metric := range metrics {
+		err = ms.expert.SetMetric(metric)
+		if err != nil {
+			http.Error(w, "unable to set metrics to RAM", http.StatusBadRequest)
+			return
+		}
 	}
 	w.WriteHeader(http.StatusOK)
 }
 func (ms *Metrics) GetMetricJSON(w http.ResponseWriter, r *http.Request) {
 	m := data.Metrics{}
 	dec := json.NewDecoder(r.Body)
-	dec.Decode(&m)
-	switch m.MType {
-	case "gauge":
-		g, err := ms.MemStorage.GetGauge(m.ID)
-		if err != nil {
-			http.Error(w, "", http.StatusNotFound)
-		}
-		m = data.Metrics{ID: g.Name, MType: "gauge", Value: &g.Val}
-
-	case "counter":
-		c, err := ms.MemStorage.GetCounter(m.ID)
-		if err != nil {
-			http.Error(w, "", http.StatusNotFound)
-		}
-		m = data.Metrics{ID: c.Name, MType: "counter", Delta: &c.Val}
-	default:
+	err := dec.Decode(&m)
+	if err != nil {
+		http.Error(w, "unable to decode teq body", http.StatusBadRequest)
+		return
+	}
+	m, err = ms.expert.GetMetric(m)
+	if err != nil && errors.Is(err, interfaces.ErrWrongType) {
 		http.Error(w, "", http.StatusBadRequest)
+		return
+	}
+	if err != nil && errors.Is(err, interfaces.ErrNotContains) {
+		http.Error(w, "", http.StatusNotFound)
+		return
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
@@ -70,93 +86,86 @@ func (ms *Metrics) GetMetricJSON(w http.ResponseWriter, r *http.Request) {
 func (ms *Metrics) GetMetrics(w http.ResponseWriter, r *http.Request) {
 	const formbegin = `<html><head><title></title></head><body>`
 	const formend = `</body></html>`
-	metrics := ms.MemStorage.GetMetrics()
+	metrics := ms.expert.GetMetrics()
+	m := make([]string, 0, 40)
+	for _, val := range metrics {
+		switch val.MType {
+		case "gauge":
+			m = append(m, val.ID+":"+strconv.FormatFloat(*val.Value, 'f', -1, 64))
+		case "counter":
+			m = append(m, val.ID+":"+strconv.FormatInt(*val.Delta, 10))
+		}
+
+	}
 	w.Header().Set("Content-Type", "text/html")
 	io.WriteString(w, formbegin)
-	io.WriteString(w, strings.Join(metrics, ", "))
+	io.WriteString(w, strings.Join(m, ", "))
 	io.WriteString(w, formend)
 }
 
-func (ms *Metrics) SetMetricsURL(w http.ResponseWriter, req *http.Request) {
-	url, _ := strings.CutPrefix(req.URL.Path, "/update/")
+func (ms *Metrics) SetMetricsURL(w http.ResponseWriter, r *http.Request) {
+	logger.Log.Info("in set metrics url")
+	url, _ := strings.CutPrefix(r.URL.Path, "/update/")
 	urlValues := strings.Split(url, "/")
-	if len(urlValues) < 3 {
-		http.Error(w, "", http.StatusNotFound)
-		return
-	}
-	if urlValues[0] == "" {
-		http.Error(w, "", http.StatusNotFound)
-		return
-	}
 	if urlValues[1] == "" {
 		http.Error(w, "", http.StatusNotFound)
 		return
 	}
-	if urlValues[0] != "counter" && urlValues[0] != "gauge" {
-		http.Error(w, "Bad request", http.StatusBadRequest)
-		return
-	}
-
+	m := data.Metrics{}
+	m.MType = urlValues[0]
+	m.ID = urlValues[1]
 	switch urlValues[0] {
 	case "gauge":
-		ms.SetGaugeURL(w, req)
+		val, err := strconv.ParseFloat(urlValues[2], 64)
+		if err != nil {
+			http.Error(w, "Wrong metric value", http.StatusBadRequest)
+			return
+		}
+		m.Value = &val
 	case "counter":
-		ms.SetCounterURL(w, req)
+		del, err := strconv.ParseInt(urlValues[2], 10, 64)
+		if err != nil {
+			http.Error(w, "Wrong metric value", http.StatusBadRequest)
+			return
+		}
+		m.Delta = &del
 	default:
 		{
 			http.Error(w, "Wrong metric type", http.StatusBadRequest)
 			return
 		}
 	}
-}
-func (ms *Metrics) SetGaugeURL(w http.ResponseWriter, req *http.Request) {
-	url, _ := strings.CutPrefix(req.URL.Path, "/update/gauge/")
-	urlValues := strings.Split(url, "/")
-
-	val, err := strconv.ParseFloat(urlValues[1], 64)
+	err := ms.expert.SetMetric(m)
 	if err != nil {
-		http.Error(w, "wrong metric value", http.StatusBadRequest)
+		logger.Log.Sugar().Error(err.Error())
+		http.Error(w, "Bad request", http.StatusBadRequest)
 		return
 	}
-	ms.MemStorage.SetGauge(data.Gauge{Name: urlValues[0], Val: val})
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(""))
-}
-
-func (ms *Metrics) SetCounterURL(w http.ResponseWriter, req *http.Request) {
-
-	url, _ := strings.CutPrefix(req.URL.Path, "/update/counter/")
-	urlValues := strings.Split(url, "/")
-	val, err := strconv.ParseInt(urlValues[1], 10, 64)
-	if err != nil {
-		http.Error(w, "wrong metric value", http.StatusBadRequest)
-		return
-	}
-	ms.MemStorage.SetCounter(data.Counter{Name: urlValues[0], Val: val})
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(""))
-
 }
 
 func (ms *Metrics) GetMetricURL(w http.ResponseWriter, r *http.Request) {
 	t := chi.URLParam(r, "type")
 	name := chi.URLParam(r, "name")
+	metric := data.Metrics{ID: name, MType: t}
+	m, err := ms.expert.GetMetric(metric)
+	if err != nil && errors.Is(err, interfaces.ErrWrongType) {
+		http.Error(w, "", http.StatusBadRequest)
+		return
+	}
+	if err != nil && errors.Is(err, interfaces.ErrNotContains) {
+		http.Error(w, "", http.StatusNotFound)
+		return
+	}
 	data := ""
-	switch t {
+	switch m.MType {
 	case "gauge":
-		g, err := ms.MemStorage.GetGauge(name)
-		if err != nil {
-			http.Error(w, "", http.StatusNotFound)
-		}
-		data = strconv.FormatFloat(g.Val, 'f', -1, 64)
+		data = strconv.FormatFloat(*m.Value, 'f', -1, 64)
 	case "counter":
-		c, err := ms.MemStorage.GetCounter(name)
-		if err != nil {
-			http.Error(w, "", http.StatusNotFound)
-		}
-		data = strconv.FormatInt(c.Val, 10)
+		data = strconv.FormatInt(*m.Delta, 10)
 	default:
 		http.Error(w, "", http.StatusBadRequest)
+		return
 	}
 	w.Write([]byte(data))
 }

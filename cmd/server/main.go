@@ -1,15 +1,16 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
-	"time"
 
-	"github.com/DEHbNO4b/metrics/internal/data"
+	"github.com/DEHbNO4b/metrics/internal/expert"
 	"github.com/DEHbNO4b/metrics/internal/handlers"
 	logger "github.com/DEHbNO4b/metrics/internal/loger"
+	"github.com/DEHbNO4b/metrics/internal/maindb"
 	"github.com/DEHbNO4b/metrics/internal/middleware"
 	"github.com/go-chi/chi/v5"
+	_ "github.com/golang/mock/mockgen/model"
+	_ "github.com/jackc/pgx/v5/stdlib"
 	"go.uber.org/zap"
 )
 
@@ -18,22 +19,39 @@ func main() {
 		panic(err)
 	}
 	parseFlag()
+	sqlDB := maindb.NewPostgresDB(dsn)
+	defer sqlDB.Close()
+	ph := handlers.NewPinger(sqlDB) //хэндлер для пинга
+	config := expert.StoreConfig{
+		StoreInterval: storeInterval,
+		Filepath:      filestoragepath,
+		Restore:       restore,
+	}
+	withDB := selectStore(dsn, filestoragepath) //выбор способа храниения данных (sqlDB | fileDB) для эксперта
+	expert := expert.NewExpert(expert.WithConfig(config), expert.WithRAM(maindb.NewMemStorage()), withDB)
+	defer expert.StoreData() //сохранение данный при завершении программы
+
+	mh := handlers.NewMetrics(expert) //хэндлер для приема и отправки метрик
 	r := chi.NewRouter()
-	sc := data.StoreConfig{StoreInterval: time.Duration(storeInterval) * time.Second, Filepath: filestoragepath, Restore: restore}
-	fmt.Printf("%+v\n", sc)
-	ms := data.NewMetStore(sc)
-	defer ms.StoreData()
-	mh := handlers.NewMetrics(ms)
 	r.Use(middleware.WithLogging)
 	r.Use(middleware.GzipHandle)
 	r.Post(`/update/{type}/{name}/{value}`, http.HandlerFunc(mh.SetMetricsURL))
 	r.Get(`/value/{type}/{name}`, http.HandlerFunc(mh.GetMetricURL))
-	r.Post(`/update/`, http.HandlerFunc(mh.SetMetricsJSON))
+	r.Post(`/update/`, http.HandlerFunc(mh.SetMetricJSON))
+	r.Post(`/updates/`, http.HandlerFunc(mh.SetMetricsJSON))
 	r.Post(`/value/`, http.HandlerFunc(mh.GetMetricJSON))
+	r.Get(`/ping`, http.HandlerFunc(ph.PingDB))
 	r.Get(`/`, mh.GetMetrics)
 	logger.Log.Info("Running server", zap.String("address", runAddr))
 	err := http.ListenAndServe(runAddr, r)
 	if err != nil {
 		panic(err)
 	}
+}
+
+func selectStore(dsn string, f string) expert.ExpertConfiguration {
+	if dsn != "" {
+		return expert.WithDatabase(maindb.NewPostgresDB(dsn))
+	}
+	return expert.WithDatabase(maindb.NewFileDB(f))
 }
