@@ -30,9 +30,10 @@ func main() {
 	withDB := selectStore(dsn, filestoragepath) //выбор способа храниения данных (sqlDB | fileDB) для эксперта
 	expert := expert.NewExpert(expert.WithConfig(config), expert.WithRAM(maindb.NewMemStorage()), withDB)
 	defer expert.StoreData() //сохранение данный при завершении программы
-
+	h := middleware.Hash{Key: []byte(key)}
 	mh := handlers.NewMetrics(expert) //хэндлер для приема и отправки метрик
 	r := chi.NewRouter()
+	r.Use(h.WithHash)
 	r.Use(middleware.WithLogging)
 	r.Use(middleware.GzipHandle)
 	r.Post(`/update/{type}/{name}/{value}`, http.HandlerFunc(mh.SetMetricsURL))

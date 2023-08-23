@@ -33,13 +33,13 @@ func NewMemStorage() *MemStorage {
 func (rs *MemStorage) SetMetric(metric data.Metrics) error {
 	switch metric.MType {
 	case "gauge":
-		rs.Lock()
+		// rs.Lock()
 		rs.Gauges[metric.ID] = *metric.Value
-		rs.Unlock()
+		// rs.Unlock()
 	case "counter":
-		rs.Lock()
+		// rs.Lock()
 		rs.Counters[metric.ID] = *metric.Delta
-		rs.Unlock()
+		// rs.Unlock()
 	default:
 		return interfaces.ErrWrongType
 	}
@@ -47,6 +47,7 @@ func (rs *MemStorage) SetMetric(metric data.Metrics) error {
 }
 func (rs *MemStorage) GetMetrics() []data.Metrics {
 	metrics := make([]data.Metrics, 0, 30)
+	// rs.RLock()
 	for name, val := range rs.Gauges {
 		metric := data.NewMetric()
 		metric.ID = name
@@ -62,18 +63,23 @@ func (rs *MemStorage) GetMetrics() []data.Metrics {
 		metrics = append(metrics, metric)
 
 	}
+	// rs.Unlock()
 	return metrics
 }
 func (rs *MemStorage) GetMetric(met data.Metrics) (data.Metrics, error) {
 	switch met.MType {
 	case "gauge":
+		// rs.Lock()
 		val, ok := rs.Gauges[met.ID]
+		// rs.Unlock()
 		if !ok {
 			return data.Metrics{}, interfaces.ErrNotContains
 		}
 		met.Value = &val
 	case "counter":
+		// rs.Lock()
 		del, ok := rs.Counters[met.ID]
+		// rs.Unlock()
 		if !ok {
 			return data.Metrics{}, interfaces.ErrNotContains
 		}
