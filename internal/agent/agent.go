@@ -112,7 +112,7 @@ func (a Agent) sendMetric(m data.Metrics, key string) {
 	req.Header.Add("Content-encoding", "gzip")
 	req.Header.Add("Accept-encoding", "gzip")
 	if key != "" {
-		b := signature(key, compressed.Bytes())
+		b := signature(key, buf.Bytes())
 		req.Header.Add("HashSHA256", string(b))
 	}
 	resp, err := a.client.Do(req)
@@ -126,5 +126,6 @@ func signature(key string, b []byte) []byte {
 	h := hmac.New(sha256.New, []byte(key))
 	h.Write(b)
 	dst := h.Sum(nil)
+	logger.Log.Sugar().Infof("%x", dst)
 	return dst
 }

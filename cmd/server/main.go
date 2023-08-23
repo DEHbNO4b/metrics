@@ -33,9 +33,10 @@ func main() {
 	h := middleware.Hash{Key: []byte(key)}
 	mh := handlers.NewMetrics(expert) //хэндлер для приема и отправки метрик
 	r := chi.NewRouter()
-	r.Use(h.WithHash)
+
 	r.Use(middleware.WithLogging)
 	r.Use(middleware.GzipHandle)
+	r.Use(h.WithHash)
 	r.Post(`/update/{type}/{name}/{value}`, http.HandlerFunc(mh.SetMetricsURL))
 	r.Get(`/value/{type}/{name}`, http.HandlerFunc(mh.GetMetricURL))
 	r.Post(`/update/`, http.HandlerFunc(mh.SetMetricJSON))
