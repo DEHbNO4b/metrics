@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	logger "github.com/DEHbNO4b/metrics/internal/loger"
+	"go.uber.org/zap"
 )
 
 type Hash struct {
@@ -15,14 +16,13 @@ type Hash struct {
 
 func (h *Hash) WithHash(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// 	var nextWriter = w
-
 		if r.Header.Get("HashSHA256") != "" {
 			h := hmac.New(sha256.New, h.Key)
 			b, err := io.ReadAll(r.Body)
 			if err != nil {
-				logger.Log.Error(err.Error())
+				logger.Log.Error("UNABLE TO READALL from r.Body()", zap.String("err:", err.Error()))
 				http.Error(w, "", http.StatusBadRequest)
+				return
 			}
 			h.Write(b)
 			dst := h.Sum(nil)
@@ -31,6 +31,7 @@ func (h *Hash) WithHash(next http.Handler) http.Handler {
 			if !hmac.Equal(dst, []byte(r.Header.Get("HashSHA256"))) {
 				logger.Log.Sugar().Error("BAD REQUEST HASH")
 				http.Error(w, "", http.StatusBadRequest)
+				return
 			}
 		}
 		next.ServeHTTP(w, r)
