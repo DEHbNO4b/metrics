@@ -48,7 +48,7 @@ func GzipHandle(next http.Handler) http.Handler {
 				io.WriteString(w, err.Error())
 				return
 			}
-			defer gzr.Close()
+			// defer gzr.Close()
 			r.Body = gzr
 		}
 		next.ServeHTTP(nextWriter, r)
