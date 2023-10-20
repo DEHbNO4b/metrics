@@ -45,14 +45,10 @@ func (a Agent) PullMetrics(interval int, key string) {
 		for _, el := range a.gauges {
 			el.ReadValue(a.m)
 			metrics = append(metrics, el)
-			//go a.sendMetric(el, key)
 		}
 		var d int64 = 1
-		// go a.sendMetric(data.Metrics{ID: "PollCount", MType: "counter", Delta: &d}, key)
-		// a.gauges = append(a.gauges, data.Metrics{ID: "PollCount", MType: "counter", Delta: &d})
 		metrics = append(metrics, data.Metrics{ID: "PollCount", MType: "counter", Delta: &d})
 		go a.sendMetrics(metrics)
-		// fmt.Printf("%+v\n", metrics)
 		time.Sleep(reportInterval)
 	}
 
