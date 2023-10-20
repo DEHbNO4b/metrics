@@ -26,6 +26,7 @@ func NewMetrics(m interfaces.MetricsStorage) Metrics {
 }
 
 func (ms *Metrics) SetMetricJSON(w http.ResponseWriter, req *http.Request) {
+	logger.Log.Info("in SetMetricJSON")
 	m := data.Metrics{}
 	dec := json.NewDecoder(req.Body)
 	err := dec.Decode(&m)
@@ -42,7 +43,7 @@ func (ms *Metrics) SetMetricJSON(w http.ResponseWriter, req *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 func (ms *Metrics) SetMetricsJSON(w http.ResponseWriter, r *http.Request) {
-	logger.Log.Info("in set metrics handler")
+	logger.Log.Info("in set metrics JSON handler")
 	metrics := make([]data.Metrics, 0, 30)
 	dec := json.NewDecoder(r.Body)
 	err := dec.Decode(&metrics)

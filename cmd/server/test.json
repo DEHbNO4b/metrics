@@ -1,2 +1,0 @@
-{"id":"someGauge","type":"gauge","delta":0,"value":10}
-{"id":"someCounter","type":"counter","delta":30,"value":0}

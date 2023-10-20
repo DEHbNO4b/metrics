@@ -3,6 +3,8 @@ package agent
 import (
 	"bytes"
 	"compress/gzip"
+	"crypto/hmac"
+	"crypto/sha256"
 	"encoding/json"
 	"net/http"
 	"runtime"
@@ -36,17 +38,17 @@ func (a Agent) ReadRuntimeMetrics(interval int) {
 	}
 
 }
-func (a Agent) PullMetrics(interval int) {
+func (a Agent) PullMetrics(interval int, key string) {
 	var reportInterval = time.Duration(interval) * time.Second
+	metrics := make([]data.Metrics, 0, 30)
 	for {
 		for _, el := range a.gauges {
 			el.ReadValue(a.m)
-			go a.sendMetric(el)
+			metrics = append(metrics, el)
 		}
-		d := int64(1)
-		go a.sendMetric(data.Metrics{ID: "PollCount", MType: "counter", Delta: &d})
-		// a.gauges = append(a.gauges, data.Metrics{ID: "PollCount", MType: "counter", Delta: &d})
-		// go a.sendMetrics(a.gauges)
+		var d int64 = 1
+		metrics = append(metrics, data.Metrics{ID: "PollCount", MType: "counter", Delta: &d})
+		go a.sendMetrics(metrics)
 		time.Sleep(reportInterval)
 	}
 
@@ -83,7 +85,8 @@ func (a Agent) sendMetrics(metrics []data.Metrics) {
 	}
 	resp.Body.Close()
 }
-func (a Agent) sendMetric(m data.Metrics) {
+func (a Agent) sendMetric(m data.Metrics, key string) {
+	var req *http.Request
 	buf := bytes.Buffer{}
 	enc := json.NewEncoder(&buf)
 	err := enc.Encode(&m)
@@ -97,24 +100,32 @@ func (a Agent) sendMetric(m data.Metrics) {
 		logger.Log.Sugar().Error(err.Error())
 		return
 	}
-	// fmt.Println(buf.Bytes())
 	compressor.Write(buf.Bytes())
 	compressor.Close()
-
-	req, err := http.NewRequest(http.MethodPost, a.url+"/update/", &compressed) // (1)
+	req, err = http.NewRequest(http.MethodPost, a.url+"/update/", &compressed) // (1)
 	if err != nil {
 		logger.Log.Sugar().Error(err.Error())
 		return
 	}
-
 	req.Header.Add("Content-Type", "application/json")
 	req.Header.Add("Accept", "application/json")
 	req.Header.Add("Content-encoding", "gzip")
 	req.Header.Add("Accept-encoding", "gzip")
+	if key != "" {
+		b := signature(key, buf.Bytes())
+		req.Header.Add("HashSHA256", string(b))
+	}
 	resp, err := a.client.Do(req)
 	if err != nil {
 		logger.Log.Sugar().Error(err.Error())
 		return
 	}
 	resp.Body.Close()
+}
+func signature(key string, b []byte) []byte {
+	h := hmac.New(sha256.New, []byte(key))
+	h.Write(b)
+	dst := h.Sum(nil)
+	logger.Log.Sugar().Infof("%x", dst)
+	return dst
 }

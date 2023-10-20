@@ -47,6 +47,7 @@ func (rs *MemStorage) SetMetric(metric data.Metrics) error {
 }
 func (rs *MemStorage) GetMetrics() []data.Metrics {
 	metrics := make([]data.Metrics, 0, 30)
+	rs.RLock()
 	for name, val := range rs.Gauges {
 		metric := data.NewMetric()
 		metric.ID = name
@@ -62,18 +63,23 @@ func (rs *MemStorage) GetMetrics() []data.Metrics {
 		metrics = append(metrics, metric)
 
 	}
+	rs.RUnlock()
 	return metrics
 }
 func (rs *MemStorage) GetMetric(met data.Metrics) (data.Metrics, error) {
 	switch met.MType {
 	case "gauge":
+		rs.RLock()
 		val, ok := rs.Gauges[met.ID]
+		rs.RUnlock()
 		if !ok {
 			return data.Metrics{}, interfaces.ErrNotContains
 		}
 		met.Value = &val
 	case "counter":
+		rs.RLock()
 		del, ok := rs.Counters[met.ID]
+		rs.RUnlock()
 		if !ok {
 			return data.Metrics{}, interfaces.ErrNotContains
 		}
