@@ -67,9 +67,11 @@ func (e *Expert) GetMetrics() []data.Metrics {
 	return e.ram.GetMetrics()
 }
 func (e *Expert) SetMetric(m data.Metrics) error {
-	e.setMetricToRAM(m)
+	err := e.setMetricToRAM(m)
+	if err != nil {
+		return err
+	}
 	if e.config.StoreInterval == 0 && e.config.Filepath != "" {
-		// e.saveMetricsToDB(e.ram.GetMetrics())
 		e.StoreData()
 	}
 	return nil
