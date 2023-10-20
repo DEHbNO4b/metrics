@@ -50,10 +50,10 @@ func (mr *MockMetricsStorageMockRecorder) GetMetric(arg0 interface{}) *gomock.Ca
 }
 
 // GetMetrics mocks base method.
-func (m *MockMetricsStorage) GetMetrics() []string {
+func (m *MockMetricsStorage) GetMetrics() []data.Metrics {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetMetrics")
-	ret0, _ := ret[0].([]string)
+	ret0, _ := ret[0].([]data.Metrics)
 	return ret0
 }
 
