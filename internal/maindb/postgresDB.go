@@ -5,6 +5,7 @@ import (
 
 	"github.com/DEHbNO4b/metrics/internal/data"
 	logger "github.com/DEHbNO4b/metrics/internal/loger"
+	_ "github.com/jackc/pgx/v5/stdlib"
 	"go.uber.org/zap"
 )
 

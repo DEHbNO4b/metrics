@@ -110,3 +110,27 @@ func TestMemStorage_GetMetric(t *testing.T) {
 		})
 	}
 }
+
+func BenchmarkRAMSetMetric(b *testing.B) {
+	metr := data.NewMetric()
+	metr.ID = "test"
+	metr.MType = "gauge"
+	*metr.Value = 3.14
+	store := NewMemStorage()
+
+	for i := 0; i < b.N; i++ {
+		store.SetMetric(metr)
+	}
+}
+func BenchmarkRAMReadMetrics(b *testing.B) {
+
+	store := NewMemStorage()
+	metricsData := getRundomMetrics(27)
+	for _, el := range metricsData {
+		store.Gauges[el.MType] = *el.Value
+	}
+
+	for i := 0; i < b.N; i++ {
+		store.GetMetrics()
+	}
+}

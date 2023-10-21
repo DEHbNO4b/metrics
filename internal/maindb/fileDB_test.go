@@ -73,3 +73,27 @@ func TestFileDB_ReadMetrics(t *testing.T) {
 		})
 	}
 }
+
+func BenchmarkFileWriteMetrics(b *testing.B) {
+	f := NewFileDB("../../test.json")
+	// metricsData := make([]data.Metrics, 0, 3)
+	// metr := data.NewMetric()
+	// metr.ID = "test"
+	// metr.MType = "gauge"
+	// *metr.Value = 3.14
+	// metricsData = append(metricsData, metr)
+	metricsData := getRundomMetrics(27)
+
+	for i := 0; i < b.N; i++ {
+		f.WriteMetrics(metricsData)
+	}
+}
+func BenchmarkFileReadMetrics(b *testing.B) {
+	f := NewFileDB("../../test.json")
+	metricsData := getRundomMetrics(27)
+	f.WriteMetrics(metricsData)
+
+	for i := 0; i < b.N; i++ {
+		f.ReadMetrics()
+	}
+}
