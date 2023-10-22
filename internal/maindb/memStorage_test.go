@@ -125,12 +125,20 @@ func BenchmarkRAMSetMetric(b *testing.B) {
 func BenchmarkRAMReadMetrics(b *testing.B) {
 
 	store := NewMemStorage()
-	metricsData := getRundomMetrics(27)
+
+	// for _, size := range []int{1, 10, 100, 1000, 10000} {
+	metricsData := getRundomMetrics(20)
 	for _, el := range metricsData {
 		store.Gauges[el.MType] = *el.Value
 	}
 
+	b.ResetTimer()
+
+	// name := fmt.Sprintf("Contains-%d", size)
+	// b.Run(name, func(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		store.GetMetrics()
 	}
+	// })
+	// }
 }

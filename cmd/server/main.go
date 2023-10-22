@@ -3,6 +3,8 @@ package main
 import (
 	"net/http"
 
+	_ "net/http/pprof"
+
 	"github.com/DEHbNO4b/metrics/internal/expert"
 	"github.com/DEHbNO4b/metrics/internal/handlers"
 	logger "github.com/DEHbNO4b/metrics/internal/loger"
@@ -37,6 +39,7 @@ func main() {
 	r.Use(middleware.WithLogging)
 	r.Use(middleware.GzipHandle)
 	r.Use(h.WithHash)
+	r.Mount("/debug", middleware.Profiler())
 	r.Post(`/update/{type}/{name}/{value}`, http.HandlerFunc(mh.SetMetricsURL))
 	r.Get(`/value/{type}/{name}`, http.HandlerFunc(mh.GetMetricURL))
 	r.Post(`/update/`, http.HandlerFunc(mh.SetMetricJSON))

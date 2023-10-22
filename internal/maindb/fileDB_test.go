@@ -89,11 +89,18 @@ func BenchmarkFileWriteMetrics(b *testing.B) {
 	}
 }
 func BenchmarkFileReadMetrics(b *testing.B) {
+
 	f := NewFileDB("../../test.json")
-	metricsData := getRundomMetrics(27)
+	// for _, size := range []int{1, 10, 100, 1000, 10000} {
+	metricsData := getRundomMetrics(20)
 	f.WriteMetrics(metricsData)
 
+	b.ResetTimer()
+	// name := fmt.Sprintf("Contains-%d", size)
+	// b.Run(name, func(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		f.ReadMetrics()
 	}
+	// })
+	// }
 }

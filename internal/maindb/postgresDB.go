@@ -66,7 +66,7 @@ func (pdb *PostgresDB) WriteMetrics(metrics []data.Metrics) error {
 }
 func (pdb *PostgresDB) ReadMetrics() ([]data.Metrics, error) {
 
-	metrics := make([]data.Metrics, 0, 40)
+	metrics := make([]data.Metrics, 0, 10)
 	var (
 		id    string
 		mtype string

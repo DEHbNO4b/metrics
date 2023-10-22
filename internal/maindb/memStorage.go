@@ -46,7 +46,7 @@ func (rs *MemStorage) SetMetric(metric data.Metrics) error {
 	return nil
 }
 func (rs *MemStorage) GetMetrics() []data.Metrics {
-	metrics := make([]data.Metrics, 0, 30)
+	metrics := make([]data.Metrics, 0)
 	rs.RLock()
 	for name, val := range rs.Gauges {
 		metric := data.NewMetric()

@@ -21,10 +21,17 @@ func BenchmarkPostgresWriteMetrics(b *testing.B) {
 }
 func BenchmarkPostgresReadMetrics(b *testing.B) {
 	p := NewPostgresDB("postgres://postgres:917836@localhost:5432/test?sslmode=disable")
-	metricsData := getRundomMetrics(27)
+	// for _, size := range []int{1, 10, 100, 1000, 10000} {
+	metricsData := getRundomMetrics(20)
 	p.WriteMetrics(metricsData)
 
+	b.ResetTimer()
+
+	// name := fmt.Sprintf("Contains-%d", size)
+	// b.Run(name, func(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		p.ReadMetrics()
 	}
+	// })
+	// }
 }
