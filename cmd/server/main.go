@@ -1,3 +1,4 @@
+// package server provides management and storing incoming metrics data.
 package main
 
 import (

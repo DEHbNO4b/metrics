@@ -1,3 +1,4 @@
+// package handlers provides REST API functions.
 package handlers
 
 import (
@@ -15,16 +16,19 @@ import (
 	"go.uber.org/zap"
 )
 
+// Metrics struct contains REAST API methods.
 type Metrics struct {
 	expert interfaces.MetricsStorage
 	Pinger interfaces.Pinger
 }
 
+// NewMetrics returns new Metrics struct.
 func NewMetrics(m interfaces.MetricsStorage) Metrics {
 	ms := Metrics{expert: m}
 	return ms
 }
 
+// SetMetricJSON
 func (ms *Metrics) SetMetricJSON(w http.ResponseWriter, req *http.Request) {
 	logger.Log.Info("in SetMetricJSON")
 	m := data.Metrics{}

@@ -1,3 +1,4 @@
+// package maindb provides functions for storing metrics data.
 package maindb
 
 import (
@@ -11,13 +12,17 @@ import (
 	"go.uber.org/zap"
 )
 
+// FileDB struct implements Database interface.
 type FileDB struct {
 	filepath string
 }
 
+// NewFileDBreturns new FileDB struct.
 func NewFileDB(name string) *FileDB {
 	return &FileDB{filepath: name}
 }
+
+// WriteMetrics it is a method of interfaces.Database. It is writes set of metrics to file.
 func (f *FileDB) WriteMetrics(data []data.Metrics) error {
 	logger.Log.Info("in fileDB WriteMetrics()")
 	file, err := os.OpenFile(filepath.FromSlash(f.filepath), os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0666)
@@ -41,6 +46,7 @@ func (f *FileDB) WriteMetrics(data []data.Metrics) error {
 	return nil
 }
 
+// ReadMetrics it is a method of interfaces.Database. It is reads set of metrics from file.
 func (f *FileDB) ReadMetrics() ([]data.Metrics, error) {
 	logger.Log.Info("in fileDB ReadMetrics()")
 	metrics := make([]data.Metrics, 0, 10)

@@ -1,3 +1,4 @@
+// package agent provides finctions for collecting metrics from *runtime.MemStats.
 package main
 
 import (

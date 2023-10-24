@@ -1,3 +1,4 @@
+// package data contains definition of main models.
 package data
 
 import (
@@ -8,6 +9,7 @@ import (
 	"go.uber.org/zap"
 )
 
+// Metrics struct is a metric model.
 type Metrics struct {
 	ID    string   `json:"id"`              // имя метрики
 	MType string   `json:"type"`            // параметр, принимающий значение gauge или counter
@@ -15,11 +17,14 @@ type Metrics struct {
 	Value *float64 `json:"value,omitempty"` // значение метрики в случае передачи gauge
 }
 
+// NewMetric return a new Metric.
 func NewMetric() Metrics {
 	var delta int64 = 0
 	var value float64 = 0
 	return Metrics{Delta: &delta, Value: &value}
 }
+
+// ReadValue reads value of specific runtime metric from *runtime.MemStats.
 func (m *Metrics) ReadValue(mem *runtime.MemStats) {
 	reader, ok := metricReaders[m.ID]
 	if !ok {

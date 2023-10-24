@@ -17,12 +17,14 @@ type Counter struct {
 	Val  int64
 }
 
+// MemStorage struct implements MetricsStorage interface.
 type MemStorage struct {
 	Gauges   map[string]float64
 	Counters map[string]int64
 	sync.RWMutex
 }
 
+// NewMemStorage returns new MemStorage.
 func NewMemStorage() *MemStorage {
 	g := make(map[string]float64)
 	c := make(map[string]int64)
@@ -30,6 +32,7 @@ func NewMemStorage() *MemStorage {
 	return &rs
 }
 
+// SetMetric sets metrics to RAM.
 func (rs *MemStorage) SetMetric(metric data.Metrics) error {
 	switch metric.MType {
 	case "gauge":
@@ -45,6 +48,8 @@ func (rs *MemStorage) SetMetric(metric data.Metrics) error {
 	}
 	return nil
 }
+
+// GetMetrics gets  set of metrics from RAM.
 func (rs *MemStorage) GetMetrics() []data.Metrics {
 	metrics := make([]data.Metrics, 0)
 	rs.RLock()
@@ -66,6 +71,8 @@ func (rs *MemStorage) GetMetrics() []data.Metrics {
 	rs.RUnlock()
 	return metrics
 }
+
+// GetMetric returns the specified metric from rame.
 func (rs *MemStorage) GetMetric(met data.Metrics) (data.Metrics, error) {
 	switch met.MType {
 	case "gauge":

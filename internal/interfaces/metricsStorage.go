@@ -9,6 +9,7 @@ import (
 var ErrNotContains error = errors.New("not contains this metric")
 var ErrWrongType error = errors.New("wrong metric type")
 
+// MetricsStorage it is an interface for storing metrics in RAM.
 type MetricsStorage interface {
 	GetMetrics() []data.Metrics
 	SetMetric(data.Metrics) error

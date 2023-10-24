@@ -18,10 +18,12 @@ var createMetricsTable string = `CREATE TABLE IF NOT EXISTS metrics(
 
 // var clearMetricsTable string = `delete from metrics;`
 
+// PostgresDB struct implements Database and Pinger interface.
 type PostgresDB struct {
 	DB *sql.DB
 }
 
+// NewPostgresDB returns new PostgresDB struct.
 func NewPostgresDB(dsn string) *PostgresDB {
 	if dsn == "" {
 		return nil
@@ -34,11 +36,15 @@ func NewPostgresDB(dsn string) *PostgresDB {
 	db.Exec(createMetricsTable)
 	return &PostgresDB{DB: db}
 }
+
+// Close closes database.
 func (pdb *PostgresDB) Close() {
 	if pdb.DB != nil {
 		pdb.DB.Close()
 	}
 }
+
+// Ping checks connection of database.
 func (pdb *PostgresDB) Ping() bool {
 	if pdb.DB == nil {
 		logger.Log.Error("database object is nil")
@@ -51,6 +57,8 @@ func (pdb *PostgresDB) Ping() bool {
 	}
 	return true
 }
+
+// WriteMetrics writes metrics to database.
 func (pdb *PostgresDB) WriteMetrics(metrics []data.Metrics) error {
 	if err := pdb.DB.Ping(); err != nil {
 		return err
@@ -64,6 +72,8 @@ func (pdb *PostgresDB) WriteMetrics(metrics []data.Metrics) error {
 	}
 	return nil
 }
+
+// ReadMetrics  return set of metrics from database.
 func (pdb *PostgresDB) ReadMetrics() ([]data.Metrics, error) {
 
 	metrics := make([]data.Metrics, 0, 10)
@@ -98,6 +108,8 @@ func (pdb *PostgresDB) ReadMetrics() ([]data.Metrics, error) {
 	}
 	return metrics, nil
 }
+
+// Add write metric to database.
 func (pdb *PostgresDB) Add(metric data.Metrics) error {
 	if err := pdb.DB.Ping(); err != nil {
 		return err

@@ -1,3 +1,4 @@
+// packag agent provides automatic collection of metrics and sending them to the server.
 package agent
 
 import (
@@ -15,6 +16,7 @@ import (
 	"go.uber.org/zap"
 )
 
+// Agent struct collects runtume metrics and send them to server
 type Agent struct {
 	m      *runtime.MemStats
 	client http.Client
@@ -22,6 +24,7 @@ type Agent struct {
 	gauges []data.Metrics
 }
 
+// NewAgent return Agent structure with endpoint path inside.
 func NewAgent(endpoint string) Agent {
 	var m runtime.MemStats
 	cl := http.Client{Timeout: 1000 * time.Millisecond}
@@ -30,6 +33,7 @@ func NewAgent(endpoint string) Agent {
 	return a
 }
 
+// ReadRuntimeMetrics reads runtume metrics.
 func (a Agent) ReadRuntimeMetrics(interval int) {
 	var pollInterval = time.Duration(interval) * time.Second
 	for {
@@ -38,6 +42,8 @@ func (a Agent) ReadRuntimeMetrics(interval int) {
 	}
 
 }
+
+// PullMetrics sends metrics to server.
 func (a Agent) PullMetrics(interval int, key string) {
 	var reportInterval = time.Duration(interval) * time.Second
 	metrics := make([]data.Metrics, 0, 30)
@@ -53,6 +59,7 @@ func (a Agent) PullMetrics(interval int, key string) {
 	}
 
 }
+
 func (a Agent) sendMetrics(metrics []data.Metrics) {
 	buf := bytes.Buffer{}
 	enc := json.NewEncoder(&buf)
