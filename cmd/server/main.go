@@ -17,6 +17,12 @@ import (
 	"go.uber.org/zap"
 )
 
+var (
+	buildVersion string
+	buildDate    string
+	buildCommit  string
+)
+
 func main() {
 	if err := logger.Initialize("info"); err != nil {
 		panic(err)
