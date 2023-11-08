@@ -3,6 +3,8 @@ package main
 
 import (
 	"net/http"
+	"os"
+	"text/template"
 
 	_ "net/http/pprof"
 
@@ -23,7 +25,27 @@ var (
 	buildCommit  string
 )
 
+type build struct {
+	BuildVersion string
+	BuildDate    string
+	BuildCommit  string
+}
+
+const Template = `Build version: {{if .BuildVersion}}{{.buildVersion}}{{else}}N/A{{end}}
+Build date: {{if .BuildDate}}{{.buildDate}}{{else}}N/A{{end}}
+Build commit: {{if .BuildCommit}}{{.buildCommit}}{{else}}N/A{{end}}
+`
+
 func main() {
+	b := build{BuildVersion: buildVersion,
+		BuildDate:   buildDate,
+		BuildCommit: buildCommit}
+	t := template.Must(template.New("build").Parse(Template))
+	err := t.Execute(os.Stdout, b)
+	if err != nil {
+		panic(err)
+	}
+
 	if err := logger.Initialize("info"); err != nil {
 		panic(err)
 	}
@@ -55,7 +77,7 @@ func main() {
 	r.Get(`/ping`, http.HandlerFunc(ph.PingDB))
 	r.Get(`/`, mh.GetMetrics)
 	logger.Log.Info("Running server", zap.String("address", runAddr))
-	err := http.ListenAndServe(runAddr, r)
+	err = http.ListenAndServe(runAddr, r)
 	if err != nil {
 		panic(err)
 	}
