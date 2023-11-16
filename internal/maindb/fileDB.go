@@ -48,7 +48,7 @@ func (f *FileDB) WriteMetrics(data []data.Metrics) error {
 
 // ReadMetrics it is a method of interfaces.Database. It is reads set of metrics from file.
 func (f *FileDB) ReadMetrics() ([]data.Metrics, error) {
-	logger.Log.Info("in fileDB ReadMetrics()")
+	// logger.Log.Info("in fileDB ReadMetrics()")
 	metrics := make([]data.Metrics, 0, 10)
 	file, err := os.OpenFile(filepath.FromSlash(f.filepath), os.O_RDONLY, 0666)
 	if err != nil {

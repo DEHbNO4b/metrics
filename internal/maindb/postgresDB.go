@@ -2,6 +2,7 @@ package maindb
 
 import (
 	"database/sql"
+	"errors"
 
 	"github.com/DEHbNO4b/metrics/internal/data"
 	logger "github.com/DEHbNO4b/metrics/internal/loger"
@@ -24,17 +25,17 @@ type PostgresDB struct {
 }
 
 // NewPostgresDB returns new PostgresDB struct.
-func NewPostgresDB(dsn string) *PostgresDB {
+func NewPostgresDB(dsn string) (*PostgresDB, error) {
 	if dsn == "" {
-		return nil
+		return &PostgresDB{}, errors.New("dsn string is empty")
 	}
 	db, err := sql.Open("pgx", dsn)
 	if err != nil {
 		logger.Log.Error("cannot open db", zap.Error(err))
-		return nil
+		return nil, errors.New("can't open db")
 	}
 	db.Exec(createMetricsTable)
-	return &PostgresDB{DB: db}
+	return &PostgresDB{DB: db}, nil
 }
 
 // Close closes database.

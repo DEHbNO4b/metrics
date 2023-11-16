@@ -7,7 +7,7 @@ import (
 )
 
 func BenchmarkPostgresWriteMetrics(b *testing.B) {
-	p := NewPostgresDB("postgres://postgres:917836@localhost:5432/test?sslmode=disable")
+	p, _ := NewPostgresDB("postgres://postgres:917836@localhost:5432/test?sslmode=disable")
 	metricsData := make([]data.Metrics, 0, 3)
 	metr := data.NewMetric()
 	metr.ID = "test"
@@ -20,7 +20,7 @@ func BenchmarkPostgresWriteMetrics(b *testing.B) {
 	}
 }
 func BenchmarkPostgresReadMetrics(b *testing.B) {
-	p := NewPostgresDB("postgres://postgres:917836@localhost:5432/test?sslmode=disable")
+	p, _ := NewPostgresDB("postgres://postgres:917836@localhost:5432/test?sslmode=disable")
 	// for _, size := range []int{1, 10, 100, 1000, 10000} {
 	metricsData := getRundomMetrics(20)
 	p.WriteMetrics(metricsData)

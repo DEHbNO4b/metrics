@@ -2,9 +2,13 @@
 package main
 
 import (
+	"context"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
 	"text/template"
+	"time"
 
 	_ "net/http/pprof"
 
@@ -50,7 +54,10 @@ func main() {
 		panic(err)
 	}
 	parseFlag()
-	sqlDB := maindb.NewPostgresDB(dsn)
+	sqlDB, err := maindb.NewPostgresDB(dsn)
+	if err != nil {
+		panic(err)
+	}
 	defer sqlDB.Close()
 	ph := handlers.NewPinger(sqlDB) //хэндлер для пинга
 	config := expert.StoreConfig{
@@ -58,7 +65,10 @@ func main() {
 		Filepath:      filestoragepath,
 		Restore:       restore,
 	}
-	withDB := selectStore(dsn, filestoragepath) //выбор способа храниения данных (sqlDB | fileDB) для эксперта
+	withDB, err := selectStore(dsn, filestoragepath) //выбор способа храниения данных (sqlDB | fileDB) для эксперта
+	if err != nil {
+		panic(err)
+	}
 	expert := expert.NewExpert(expert.WithConfig(config), expert.WithRAM(maindb.NewMemStorage()), withDB)
 	defer expert.StoreData() //сохранение данный при завершении программы
 	h := middleware.Hash{Key: []byte(key)}
@@ -76,16 +86,43 @@ func main() {
 	r.Post(`/value/`, http.HandlerFunc(mh.GetMetricJSON))
 	r.Get(`/ping`, http.HandlerFunc(ph.PingDB))
 	r.Get(`/`, mh.GetMetrics)
-	logger.Log.Info("Running server", zap.String("address", runAddr))
-	err = http.ListenAndServe(runAddr, r)
-	if err != nil {
-		panic(err)
+	srv := &http.Server{
+		Addr:    runAddr,
+		Handler: r,
 	}
+
+	// listen to OS signals and gracefully shutdown HTTP server
+	stopped := make(chan struct{})
+	go func() {
+		sigint := make(chan os.Signal, 1)
+		signal.Notify(sigint, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
+		<-sigint
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		if err := srv.Shutdown(ctx); err != nil {
+			logger.Log.Error("HTTP Server Shutdown Error", zap.Error(err))
+		}
+		close(stopped)
+	}()
+
+	logger.Log.Info("Running server", zap.String("address", runAddr))
+	// start HTTP server
+	if err := srv.ListenAndServe(); err != http.ErrServerClosed {
+		logger.Log.Fatal("HTTP server ListenAndServe Error", zap.Error(err))
+	}
+
+	<-stopped
+
+	logger.Log.Info("Have a nice day!")
 }
 
-func selectStore(dsn string, f string) expert.ExpertConfiguration {
+func selectStore(dsn string, f string) (expert.ExpertConfiguration, error) {
 	if dsn != "" {
-		return expert.WithDatabase(maindb.NewPostgresDB(dsn))
+		db, err := maindb.NewPostgresDB(dsn)
+		if err != nil {
+			return nil, err
+		}
+		return expert.WithDatabase(db), nil
 	}
-	return expert.WithDatabase(maindb.NewFileDB(f))
+	return expert.WithDatabase(maindb.NewFileDB(f)), nil
 }
