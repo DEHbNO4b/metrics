@@ -71,27 +71,28 @@ func main() {
 	}
 	expert := expert.NewExpert(expert.WithConfig(config), expert.WithRAM(maindb.NewMemStorage()), withDB)
 	defer expert.StoreData() //сохранение данный при завершении программы
-	h := middleware.Hash{Key: []byte(key)}
-	mh := handlers.NewMetrics(expert) //хэндлер для приема и отправки метрик
-	r := chi.NewRouter()
 
-	r.Use(middleware.WithLogging)
-	r.Use(middleware.GzipHandle)
-	r.Use(h.WithHash)
-	r.Mount("/debug", middleware.Profiler())
-	r.Post(`/update/{type}/{name}/{value}`, http.HandlerFunc(mh.SetMetricsURL))
-	r.Get(`/value/{type}/{name}`, http.HandlerFunc(mh.GetMetricURL))
-	r.Post(`/update/`, http.HandlerFunc(mh.SetMetricJSON))
-	r.Post(`/updates/`, http.HandlerFunc(mh.SetMetricsJSON))
-	r.Post(`/value/`, http.HandlerFunc(mh.GetMetricJSON))
-	r.Get(`/ping`, http.HandlerFunc(ph.PingDB))
-	r.Get(`/`, mh.GetMetrics)
-	srv := &http.Server{
-		Addr:    runAddr,
-		Handler: r,
-	}
+	// r := chi.NewRouter()
+
+	// r.Use(middleware.WithLogging)
+	// r.Use(middleware.GzipHandle)
+	// r.Use(h.WithHash)
+	// r.Mount("/debug", middleware.Profiler())
+	// r.Post(`/update/{type}/{name}/{value}`, http.HandlerFunc(mh.SetMetricsURL))
+	// r.Get(`/value/{type}/{name}`, http.HandlerFunc(mh.GetMetricURL))
+	// r.Post(`/update/`, http.HandlerFunc(mh.SetMetricJSON))
+	// r.Post(`/updates/`, http.HandlerFunc(mh.SetMetricsJSON))
+	// r.Post(`/value/`, http.HandlerFunc(mh.GetMetricJSON))
+	// r.Get(`/ping`, http.HandlerFunc(ph.PingDB))
+	// r.Get(`/`, mh.GetMetrics)
+	// srv := &http.Server{
+	// 	Addr:    runAddr,
+	// 	Handler: r,
+	// }
 
 	// listen to OS signals and gracefully shutdown HTTP server
+
+	srv := newServer()
 	stopped := make(chan struct{})
 	go func() {
 		sigint := make(chan os.Signal, 1)
@@ -125,4 +126,28 @@ func selectStore(dsn string, f string) (expert.ExpertConfiguration, error) {
 		return expert.WithDatabase(db), nil
 	}
 	return expert.WithDatabase(maindb.NewFileDB(f)), nil
+}
+
+func newServer() *http.Server {
+
+	h := middleware.Hash{Key: []byte(key)}
+	mh := handlers.NewMetrics(expert) //хэндлер для приема и отправки метрик
+
+	r := chi.NewRouter()
+	r.Use(middleware.WithLogging)
+	r.Use(middleware.GzipHandle)
+	r.Use(h.WithHash)
+	r.Mount("/debug", middleware.Profiler())
+	r.Post(`/update/{type}/{name}/{value}`, http.HandlerFunc(mh.SetMetricsURL))
+	r.Get(`/value/{type}/{name}`, http.HandlerFunc(mh.GetMetricURL))
+	r.Post(`/update/`, http.HandlerFunc(mh.SetMetricJSON))
+	r.Post(`/updates/`, http.HandlerFunc(mh.SetMetricsJSON))
+	r.Post(`/value/`, http.HandlerFunc(mh.GetMetricJSON))
+	r.Get(`/ping`, http.HandlerFunc(ph.PingDB))
+	r.Get(`/`, mh.GetMetrics)
+	srv := &http.Server{
+		Addr:    runAddr,
+		Handler: r,
+	}
+	return srv
 }
