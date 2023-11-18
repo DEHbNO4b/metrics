@@ -9,7 +9,7 @@ func main() {
 	parseFlag()
 	a := agent.NewAgent(endpoint)
 	go a.ReadRuntimeMetrics(pollInterval)
-	go a.PullMetrics(reportInterval, key)
+	go a.PullMetrics(reportInterval, key, crypto)
 	select {}
 
 }

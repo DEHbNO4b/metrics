@@ -44,7 +44,10 @@ func (a Agent) ReadRuntimeMetrics(interval int) {
 }
 
 // PullMetrics sends metrics to server.
-func (a Agent) PullMetrics(interval int, key string) {
+func (a Agent) PullMetrics(interval int, key, crypto string) {
+	if crypto!=""{
+		ck:=
+	}
 	var reportInterval = time.Duration(interval) * time.Second
 	metrics := make([]data.Metrics, 0, 30)
 	for {
@@ -136,3 +139,4 @@ func signature(key string, b []byte) []byte {
 	logger.Log.Sugar().Infof("%x", dst)
 	return dst
 }
+

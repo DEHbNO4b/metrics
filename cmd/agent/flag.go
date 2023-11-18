@@ -9,7 +9,7 @@ import (
 var (
 	endpoint       string
 	key            string
-	cryptoConfPath string
+	crypto         string
 	reportInterval int
 	pollInterval   int
 )
@@ -19,10 +19,13 @@ func parseFlag() {
 	flag.StringVar(&key, "k", "", "hash key")
 	flag.IntVar(&reportInterval, "r", 10, "report interval")
 	flag.IntVar(&pollInterval, "p", 2, "poll interval")
-	flag.StringVar(&cryptoConfPath, "crypto-key", "", "crypto config file path")
+	flag.StringVar(&crypto, "crypto-key", "", "crypto config file path")
 	flag.Parse()
 	if ep := os.Getenv("ADDRESS"); ep != "" {
 		endpoint = ep
+	}
+	if ck := os.Getenv("CRYPTO_KEY"); ck != "" {
+		crypto = ck
 	}
 	if k := os.Getenv("KEY"); k != "" {
 		key = k
