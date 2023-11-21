@@ -26,10 +26,7 @@ func CryptoHandle(next http.Handler) http.Handler {
 		} else {
 			mes := bytes.NewReader(in)
 			k, err := decrypt(mes)
-			if err != nil {
-				logger.Log.Error(err.Error())
-				return
-			} else {
+			if err == nil {
 				krc := io.NopCloser(k)
 				r.Body = krc
 			}
