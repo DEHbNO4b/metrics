@@ -2,7 +2,6 @@ package middleware
 
 import (
 	"bytes"
-	"compress/gzip"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/sha256"
@@ -19,21 +18,22 @@ import (
 func CryptoHandle(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
-		mes := bytes.NewReader(r.Body)
-
-		k, err := decrypt()
+		in := []byte{}
+		_, err := r.Body.Read(in)
 		if err != nil {
 			logger.Log.Error(err.Error())
 			return
+		} else {
+			mes := bytes.NewReader(in)
+			k, err := decrypt(mes)
+			if err != nil {
+				logger.Log.Error(err.Error())
+				return
+			} else {
+				krc := io.NopCloser(k)
+				r.Body = krc
+			}
 		}
-		c, err := gzip.NewReader(r.Body)
-		if err != nil {
-			io.WriteString(w, err.Error())
-			return
-		}
-		// defer gzr.Close()
-		r.Body = c
-
 		next.ServeHTTP(w, r)
 	})
 }

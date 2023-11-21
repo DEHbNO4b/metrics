@@ -120,7 +120,9 @@ func newServer() (*http.Server, error) {
 	mh := handlers.NewMetrics(expert) //хэндлер для приема и отправки метрик
 
 	r := chi.NewRouter()
+
 	r.Use(middleware.WithLogging)
+	r.Use(middleware.CryptoHandle)
 	r.Use(middleware.GzipHandle)
 	r.Use(h.WithHash)
 	r.Mount("/debug", middleware.Profiler())
