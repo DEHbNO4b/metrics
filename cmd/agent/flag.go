@@ -2,8 +2,11 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"os"
 	"strconv"
+
+	"github.com/DEHbNO4b/metrics/internal/config"
 )
 
 var (
@@ -41,6 +44,12 @@ func parseFlag() {
 		pInt, err := strconv.Atoi(pi)
 		if err != nil {
 			pollInterval = pInt
+		}
+	}
+	if crypto != "" {
+		_, err := config.DecPub(crypto)
+		if err != nil {
+			fmt.Println(err)
 		}
 	}
 }

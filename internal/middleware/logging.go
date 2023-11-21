@@ -55,7 +55,6 @@ func WithLogging(h http.Handler) http.Handler {
 			zap.Int("status", responseData.status), // получаем перехваченный код статуса ответа
 			zap.Duration("duration", duration),
 			zap.Int("size", responseData.size), // получаем перехваченный размер ответа
-
 		)
 	}
 	return http.HandlerFunc(logFn)

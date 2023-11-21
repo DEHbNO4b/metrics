@@ -5,12 +5,18 @@ import (
 	"bytes"
 	"compress/gzip"
 	"crypto/hmac"
+	"crypto/rand"
+	"crypto/rsa"
 	"crypto/sha256"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"net/http"
+	"os"
 	"runtime"
 	"time"
 
+	"github.com/DEHbNO4b/metrics/internal/config"
 	"github.com/DEHbNO4b/metrics/internal/data"
 	logger "github.com/DEHbNO4b/metrics/internal/loger"
 	"go.uber.org/zap"
@@ -45,9 +51,9 @@ func (a Agent) ReadRuntimeMetrics(interval int) {
 
 // PullMetrics sends metrics to server.
 func (a Agent) PullMetrics(interval int, key, crypto string) {
-	if crypto!=""{
-		ck:=
-	}
+	// if crypto!=""{
+	// 	ck:=
+	// }
 	var reportInterval = time.Duration(interval) * time.Second
 	metrics := make([]data.Metrics, 0, 30)
 	for {
@@ -79,6 +85,12 @@ func (a Agent) sendMetrics(metrics []data.Metrics) {
 	}
 	compressor.Write(buf.Bytes())
 	compressor.Close()
+	mes, err := encrypt(compressed)
+	if err != nil {
+		logger.Log.Error(err.Error())
+	} else {
+		compressed = mes
+	}
 	req, err := http.NewRequest(http.MethodPost, a.url+"/updates/", &compressed) // (1)
 	if err != nil {
 		logger.Log.Sugar().Error(err.Error())
@@ -140,3 +152,23 @@ func signature(key string, b []byte) []byte {
 	return dst
 }
 
+func encrypt(b bytes.Buffer) (bytes.Buffer, error) {
+	k, err := config.GetPub()
+	if err != nil {
+		return b, err
+	}
+	rng := rand.Reader
+	pub, ok := k.(rsa.PublicKey)
+	if !ok {
+		return b, errors.New("wrong crypto key")
+	}
+	text, err := rsa.EncryptOAEP(sha256.New(), rng, &pub, b.Bytes(), []byte("metrics"))
+
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error from encryption: %s\n", err)
+		return b, err
+	}
+	buf := bytes.Buffer{}
+	buf.Write(text)
+	return buf, nil
+}

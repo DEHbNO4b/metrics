@@ -5,6 +5,7 @@ import (
 	"os"
 	"strconv"
 
+	"github.com/DEHbNO4b/metrics/internal/config"
 	logger "github.com/DEHbNO4b/metrics/internal/loger"
 )
 
@@ -57,5 +58,11 @@ func parseFlag() {
 			return
 		}
 		restore = re
+	}
+	if cryptoConfPath != "" {
+		_, err := config.DecPr(cryptoConfPath)
+		if err != nil {
+			logger.Log.Error(err.Error())
+		}
 	}
 }
