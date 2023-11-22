@@ -12,17 +12,6 @@ import (
 	logger "github.com/DEHbNO4b/metrics/internal/loger"
 )
 
-// var (
-// 	runAddr         string
-// 	filestoragepath string
-// 	dsn             string
-// 	key             string
-// 	cryptoConfPath  string
-// 	storeInterval   int
-// 	restore         bool
-// 	confPath        string
-// )
-
 type ServerConfig struct {
 	Adress        string `json:"address"`
 	Restore       bool   `json:"restore"`
@@ -44,7 +33,7 @@ func GetServCfg() ServerConfig {
 		parseFlag()
 		parseEnv()
 		if Cfg.ConfPath != "" {
-			c, err := readConfFile(Cfg.ConfPath)
+			c, err := readServConfFile(Cfg.ConfPath)
 			if err != nil {
 				logger.Log.Error(err.Error())
 			}
@@ -125,8 +114,8 @@ func parseEnv() {
 		}
 	}
 }
-func readConfFile(path string) (ServerConfig, error) {
-	f, err := os.OpenFile(Cfg.ConfPath, os.O_RDONLY, 0755)
+func readServConfFile(path string) (ServerConfig, error) {
+	f, err := os.OpenFile(path, os.O_RDONLY, 0755)
 	if err != nil {
 		return ServerConfig{}, err
 	}

@@ -1,11 +1,16 @@
 package config
 
 import (
+	"bufio"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 	"sync"
+
+	logger "github.com/DEHbNO4b/metrics/internal/loger"
 )
 
 // var (
@@ -27,6 +32,7 @@ type AgentConfig struct {
 	PollInterval   int    `json:"poll_interval"`   //"poll_interval": "1s", // аналог переменной окружения POLL_INTERVAL или флага -p
 	CryptoKey      string `json:"crypto_key"`      //"crypto_key": "/path/to/key.pem" // аналог переменной окружения CRYPTO_KEY или флага -crypto-key
 	HashKey        string
+	ConfPath       string
 }
 
 func GetAgentCfg() AgentConfig {
@@ -34,8 +40,27 @@ func GetAgentCfg() AgentConfig {
 	agentOnce.Do(func() {
 		parseAgentFlag()
 		parseAgentEnv()
+		if AgentCfg.ConfPath != "" {
+			c, err := readAgentConfFile(AgentCfg.ConfPath)
+			if err != nil {
+				logger.Log.Error(err.Error())
+			}
+			if AgentCfg.Adress == "" {
+				AgentCfg.Adress = c.Adress
+			}
+			if AgentCfg.ReportInterval == 0 {
+				AgentCfg.ReportInterval = c.ReportInterval
+			}
+			if AgentCfg.PollInterval == 0 {
+				AgentCfg.PollInterval = c.PollInterval
+			}
 
+			if AgentCfg.CryptoKey == "" {
+				AgentCfg.CryptoKey = c.CryptoKey
+			}
+		}
 	})
+
 	return AgentCfg
 }
 
@@ -77,4 +102,32 @@ func parseAgentEnv() {
 			fmt.Println(err)
 		}
 	}
+}
+func readAgentConfFile(path string) (AgentConfig, error) {
+	f, err := os.OpenFile(path, os.O_RDONLY, 0755)
+	if err != nil {
+		return AgentConfig{}, err
+	}
+	defer f.Close()
+
+	sc := bufio.NewScanner(f)
+	var text = ""
+	for sc.Scan() {
+		line := sc.Text()
+		if strings.Contains(line, "//") {
+			str := strings.Split(line, "//")
+			line = str[0] + "\n"
+		}
+		text = text + line
+	}
+	if err := sc.Err(); err != nil {
+		return AgentConfig{}, err
+	}
+
+	cfg := AgentConfig{}
+	err = json.Unmarshal([]byte(text), &cfg)
+	if err != nil {
+		return AgentConfig{}, err
+	}
+	return cfg, nil
 }
