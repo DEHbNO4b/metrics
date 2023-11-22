@@ -3,13 +3,15 @@ package main
 
 import (
 	"github.com/DEHbNO4b/metrics/internal/agent"
+	"github.com/DEHbNO4b/metrics/internal/config"
 )
 
 func main() {
-	parseFlag()
-	a := agent.NewAgent(endpoint)
-	go a.ReadRuntimeMetrics(pollInterval)
-	go a.PullMetrics(reportInterval, key, crypto)
+	// parseFlag()
+	cfg := config.GetAgentCfg()
+	a := agent.NewAgent(cfg.Adress)
+	go a.ReadRuntimeMetrics(cfg.PollInterval)
+	go a.PullMetrics(cfg.ReportInterval, cfg.HashKey, cfg.CryptoKey)
 	select {}
 
 }

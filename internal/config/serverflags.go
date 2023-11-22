@@ -23,7 +23,7 @@ import (
 // 	confPath        string
 // )
 
-type Config struct {
+type ServerConfig struct {
 	Adress        string `json:"address"`
 	Restore       bool   `json:"restore"`
 	StoreInterval int    `json:"store_intervAL"`
@@ -35,11 +35,11 @@ type Config struct {
 }
 
 var (
-	Cfg  Config
+	Cfg  ServerConfig
 	once sync.Once
 )
 
-func Get() Config {
+func GetServCfg() ServerConfig {
 	once.Do(func() {
 		parseFlag()
 		parseEnv()
@@ -71,7 +71,7 @@ func Get() Config {
 	return Cfg
 }
 func parseFlag() {
-	Cfg = Config{}
+	Cfg = ServerConfig{}
 	flag.StringVar(&Cfg.Adress, "a", "localhost:8080", "adress and port for running")
 	flag.StringVar(&Cfg.HashKey, "k", "", "hash key")
 	flag.StringVar(&Cfg.CryptoKey, "crypto-key", "", "crypto config file path")
@@ -125,10 +125,10 @@ func parseEnv() {
 		}
 	}
 }
-func readConfFile(path string) (Config, error) {
+func readConfFile(path string) (ServerConfig, error) {
 	f, err := os.OpenFile(Cfg.ConfPath, os.O_RDONLY, 0755)
 	if err != nil {
-		return Config{}, err
+		return ServerConfig{}, err
 	}
 	defer f.Close()
 
@@ -143,13 +143,13 @@ func readConfFile(path string) (Config, error) {
 		text = text + line
 	}
 	if err := sc.Err(); err != nil {
-		return Config{}, err
+		return ServerConfig{}, err
 	}
 
-	cfg := Config{}
+	cfg := ServerConfig{}
 	err = json.Unmarshal([]byte(text), &cfg)
 	if err != nil {
-		return Config{}, err
+		return ServerConfig{}, err
 	}
 	return cfg, nil
 }

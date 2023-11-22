@@ -25,7 +25,7 @@ type StoreConfig struct {
 type Expert struct {
 	ram    interfaces.MetricsStorage
 	db     interfaces.Database
-	config config.Config
+	config config.ServerConfig
 }
 
 // WithDatabase it as a functional option settings database.
@@ -46,7 +46,7 @@ func WithRAM(r interfaces.MetricsStorage) ExpertConfiguration {
 
 // NewExpert return new Expert struct with specifies options.
 func NewExpert(cfgs ...ExpertConfiguration) *Expert {
-	conf := config.Get()
+	conf := config.GetServCfg()
 	e := &Expert{config: conf}
 	for _, cfg := range cfgs {
 		err := cfg(e)

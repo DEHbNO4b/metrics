@@ -54,7 +54,7 @@ func main() {
 	if err := logger.Initialize("info"); err != nil {
 		panic(err)
 	}
-	cfg := config.Get()
+	cfg := config.GetServCfg()
 
 	srv, err := newServer(cfg.Dsn)
 	if err != nil {
@@ -96,7 +96,7 @@ func selectStore(dsn string, f string) (expert.ExpertConfiguration, error) {
 }
 
 func newServer(dsn string) (*http.Server, error) {
-	cfg := config.Get()
+	cfg := config.GetServCfg()
 	var ph *handlers.Pinger
 	if dsn != "" {
 		sqlDB, err := maindb.NewPostgresDB(dsn)
@@ -106,12 +106,6 @@ func newServer(dsn string) (*http.Server, error) {
 		defer sqlDB.Close()
 		ph = handlers.NewPinger(sqlDB) //хэндлер для пинга
 	}
-
-	// config := expert.StoreConfig{
-	// 	StoreInterval: storeInterval,
-	// 	Filepath:      filestoragepath,
-	// 	Restore:       restore,
-	// }
 	withDB, err := selectStore(dsn, cfg.StoreFile) //выбор способа храниения данных (sqlDB | fileDB) для эксперта
 	if err != nil {
 		return nil, err
@@ -122,7 +116,6 @@ func newServer(dsn string) (*http.Server, error) {
 	mh := handlers.NewMetrics(expert) //хэндлер для приема и отправки метрик
 
 	r := chi.NewRouter()
-
 	r.Use(middleware.WithLogging)
 	r.Use(middleware.CryptoHandle)
 	r.Use(middleware.GzipHandle)
