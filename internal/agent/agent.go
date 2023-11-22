@@ -4,6 +4,7 @@ package agent
 import (
 	"bytes"
 	"compress/gzip"
+	"context"
 	"crypto/hmac"
 	"crypto/rand"
 	"crypto/rsa"
@@ -40,33 +41,50 @@ func NewAgent(endpoint string) Agent {
 }
 
 // ReadRuntimeMetrics reads runtume metrics.
-func (a Agent) ReadRuntimeMetrics(interval int) {
+func (a Agent) ReadRuntimeMetrics(ctx context.Context, interval int) {
 	var pollInterval = time.Duration(interval) * time.Second
 	for {
-		runtime.ReadMemStats(a.m)
-		time.Sleep(pollInterval)
+		select {
+		case <-ctx.Done():
+			logger.Log.Info("ReadRuntumeMetrics done")
+			return
+		default:
+			runtime.ReadMemStats(a.m)
+			time.Sleep(pollInterval)
+		}
 	}
 
 }
 
 // PullMetrics sends metrics to server.
-func (a Agent) PullMetrics(interval int, key, crypto string) {
+func (a Agent) PullMetrics(ctx context.Context, interval int, key, crypto string) {
 
 	var reportInterval = time.Duration(interval) * time.Second
-	metrics := make([]data.Metrics, 0, 30)
+
 	for {
-		for _, el := range a.gauges {
-			el.ReadValue(a.m)
-			metrics = append(metrics, el)
+		select {
+		case <-ctx.Done():
+			logger.Log.Info("PullMetrics done")
+			return
+		default:
+			a.trunsform(reportInterval)
 		}
-		var d int64 = 1
-		metrics = append(metrics, data.Metrics{ID: "PollCount", MType: "counter", Delta: &d})
-		go a.sendMetrics(metrics)
-		time.Sleep(reportInterval)
 	}
 
 }
 
+func (a Agent) trunsform(interval time.Duration) {
+
+	metrics := make([]data.Metrics, 0, 30)
+	for _, el := range a.gauges {
+		el.ReadValue(a.m)
+		metrics = append(metrics, el)
+	}
+	var d int64 = 1
+	metrics = append(metrics, data.Metrics{ID: "PollCount", MType: "counter", Delta: &d})
+	go a.sendMetrics(metrics)
+	time.Sleep(interval)
+}
 func (a Agent) sendMetrics(metrics []data.Metrics) {
 	buf := bytes.Buffer{}
 	enc := json.NewEncoder(&buf)

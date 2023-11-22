@@ -63,7 +63,7 @@ func main() {
 	stopped := make(chan struct{})
 	go func() {
 		sigint := make(chan os.Signal, 1)
-		signal.Notify(sigint, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
+		signal.Notify(sigint, os.Interrupt, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 		<-sigint
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
