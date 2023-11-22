@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"encoding/json"
 	"flag"
-	"fmt"
 	"os"
 	"strconv"
 	"strings"
@@ -22,11 +21,16 @@ var (
 	storeInterval   int
 	restore         bool
 	confPath        string
-	configFromFile  string
+	cfg             cfgFromFile
 )
 
 type cfgFromFile struct {
-	Config map[string]string
+	Adress        string `json:"address"`
+	Restor        bool   `json:"restore"`
+	StoreInterval int    `json:"store_intervAL"`
+	StoreFile     string `json:"store_file"`
+	DSN           string `json:"database_dsn"`
+	Crypto        string `json:"crypto_key"`
 }
 
 func parseFlag() {
@@ -39,6 +43,22 @@ func parseFlag() {
 	flag.IntVar(&storeInterval, "i", 300, "data store interval")
 	flag.BoolVar(&restore, "r", true, "restore_flag")
 	flag.Parse()
+
+	if confPath != "" {
+		c, err := readConfFile(confPath)
+		if err != nil {
+			logger.Log.Error(err.Error())
+		}
+		cfg = c
+		runAddr = cfg.Adress
+		restore = cfg.Restor
+		storeInterval = cfg.StoreInterval
+		filestoragepath = cfg.StoreFile
+		dsn = cfg.DSN
+		cryptoConfPath = cfg.Crypto
+
+	}
+
 	if ep := os.Getenv("ADDRESS"); ep != "" {
 		runAddr = ep
 	}
@@ -79,36 +99,33 @@ func parseFlag() {
 			logger.Log.Error(err.Error())
 		}
 	}
-	if confPath != "" {
-		f, err := os.OpenFile(confPath, os.O_RDONLY, 0755)
-		if err != nil {
-			logger.Log.Error(err.Error())
-			return
-		}
-		defer f.Close()
 
-		sc := bufio.NewScanner(f)
-		var text = ""
-		for sc.Scan() {
-			line := sc.Text()
-			if strings.Contains(line, "//") {
-				str := strings.Split(line, "//")
-				line = str[0] + "\n"
-			}
-			text = text + line
-		}
-		if err := sc.Err(); err != nil {
-			logger.Log.Error(err.Error())
-			return
-		}
-
-		cfg := make(map[string]interface{})
-		err = json.Unmarshal([]byte(text), &cfg)
-		if err != nil {
-			logger.Log.Error(err.Error())
-			return
-		}
-		fmt.Printf("%+v", cfg)
-
+}
+func readConfFile(path string) (cfgFromFile, error) {
+	f, err := os.OpenFile(confPath, os.O_RDONLY, 0755)
+	if err != nil {
+		return cfgFromFile{}, err
 	}
+	defer f.Close()
+
+	sc := bufio.NewScanner(f)
+	var text = ""
+	for sc.Scan() {
+		line := sc.Text()
+		if strings.Contains(line, "//") {
+			str := strings.Split(line, "//")
+			line = str[0] + "\n"
+		}
+		text = text + line
+	}
+	if err := sc.Err(); err != nil {
+		return cfgFromFile{}, err
+	}
+
+	cfg := cfgFromFile{}
+	err = json.Unmarshal([]byte(text), &cfg)
+	if err != nil {
+		return cfgFromFile{}, err
+	}
+	return cfg, nil
 }
