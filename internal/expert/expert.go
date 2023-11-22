@@ -5,6 +5,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/DEHbNO4b/metrics/internal/config"
 	"github.com/DEHbNO4b/metrics/internal/data"
 	"github.com/DEHbNO4b/metrics/internal/interfaces"
 	logger "github.com/DEHbNO4b/metrics/internal/loger"
@@ -24,21 +25,13 @@ type StoreConfig struct {
 type Expert struct {
 	ram    interfaces.MetricsStorage
 	db     interfaces.Database
-	config StoreConfig
+	config config.Config
 }
 
 // WithDatabase it as a functional option settings database.
 func WithDatabase(db interfaces.Database) ExpertConfiguration {
 	return func(e *Expert) error {
 		e.db = db
-		return nil
-	}
-}
-
-// WithConfig it as a functional option settings main configs.
-func WithConfig(c StoreConfig) ExpertConfiguration {
-	return func(e *Expert) error {
-		e.config = c
 		return nil
 	}
 }
@@ -53,17 +46,18 @@ func WithRAM(r interfaces.MetricsStorage) ExpertConfiguration {
 
 // NewExpert return new Expert struct with specifies options.
 func NewExpert(cfgs ...ExpertConfiguration) *Expert {
-	e := &Expert{}
+	conf := config.Get()
+	e := &Expert{config: conf}
 	for _, cfg := range cfgs {
 		err := cfg(e)
 		if err != nil {
 			logger.Log.Error(err.Error())
 		}
 	}
-	if e.config.Restore && e.config.Filepath != "" {
+	if e.config.Restore && e.config.StoreFile != "" {
 		e.LoadFromDB()
 	}
-	if e.config.StoreInterval > 0 && e.config.Filepath != "" {
+	if e.config.StoreInterval > 0 && e.config.StoreFile != "" {
 		go func() {
 			for {
 				e.StoreData()
@@ -85,7 +79,7 @@ func (e *Expert) SetMetric(m data.Metrics) error {
 	if err != nil {
 		return err
 	}
-	if e.config.StoreInterval == 0 && e.config.Filepath != "" {
+	if e.config.StoreInterval == 0 && e.config.StoreFile != "" {
 		e.StoreData()
 	}
 	return nil

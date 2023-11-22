@@ -12,6 +12,7 @@ import (
 
 	_ "net/http/pprof"
 
+	"github.com/DEHbNO4b/metrics/internal/config"
 	"github.com/DEHbNO4b/metrics/internal/expert"
 	"github.com/DEHbNO4b/metrics/internal/handlers"
 	logger "github.com/DEHbNO4b/metrics/internal/loger"
@@ -53,9 +54,9 @@ func main() {
 	if err := logger.Initialize("info"); err != nil {
 		panic(err)
 	}
-	parseFlag()
+	cfg := config.Get()
 
-	srv, err := newServer()
+	srv, err := newServer(cfg.Dsn)
 	if err != nil {
 		panic(err)
 	}
@@ -72,7 +73,7 @@ func main() {
 		close(stopped)
 	}()
 
-	logger.Log.Info("Running server", zap.String("address", runAddr))
+	logger.Log.Info("Running server", zap.String("address", cfg.Adress))
 	// start HTTP server
 	if err := srv.ListenAndServe(); err != http.ErrServerClosed {
 		logger.Log.Fatal("HTTP server ListenAndServe Error", zap.Error(err))
@@ -94,7 +95,8 @@ func selectStore(dsn string, f string) (expert.ExpertConfiguration, error) {
 	return expert.WithDatabase(maindb.NewFileDB(f)), nil
 }
 
-func newServer() (*http.Server, error) {
+func newServer(dsn string) (*http.Server, error) {
+	cfg := config.Get()
 	var ph *handlers.Pinger
 	if dsn != "" {
 		sqlDB, err := maindb.NewPostgresDB(dsn)
@@ -105,18 +107,18 @@ func newServer() (*http.Server, error) {
 		ph = handlers.NewPinger(sqlDB) //хэндлер для пинга
 	}
 
-	config := expert.StoreConfig{
-		StoreInterval: storeInterval,
-		Filepath:      filestoragepath,
-		Restore:       restore,
-	}
-	withDB, err := selectStore(dsn, filestoragepath) //выбор способа храниения данных (sqlDB | fileDB) для эксперта
+	// config := expert.StoreConfig{
+	// 	StoreInterval: storeInterval,
+	// 	Filepath:      filestoragepath,
+	// 	Restore:       restore,
+	// }
+	withDB, err := selectStore(dsn, cfg.StoreFile) //выбор способа храниения данных (sqlDB | fileDB) для эксперта
 	if err != nil {
 		return nil, err
 	}
-	expert := expert.NewExpert(expert.WithConfig(config), expert.WithRAM(maindb.NewMemStorage()), withDB)
+	expert := expert.NewExpert(expert.WithRAM(maindb.NewMemStorage()), withDB)
 	defer expert.StoreData() //сохранение данный при завершении программы
-	h := middleware.Hash{Key: []byte(key)}
+	h := middleware.Hash{Key: []byte(cfg.HashKey)}
 	mh := handlers.NewMetrics(expert) //хэндлер для приема и отправки метрик
 
 	r := chi.NewRouter()
@@ -136,7 +138,7 @@ func newServer() (*http.Server, error) {
 	}
 	r.Get(`/`, mh.GetMetrics)
 	srv := &http.Server{
-		Addr:    runAddr,
+		Addr:    cfg.Adress,
 		Handler: r,
 	}
 	return srv, nil
