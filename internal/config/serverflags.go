@@ -21,6 +21,7 @@ type ServerConfig struct {
 	CryptoKey     string `json:"crypto_key"`
 	HashKey       string
 	ConfPath      string
+	TrustedSubnet string `json:"trusted_subnet"`
 }
 
 var (
@@ -30,43 +31,24 @@ var (
 
 func GetServCfg() ServerConfig {
 	once.Do(func() {
+		Cfg = ServerConfig{}
 		parseFlag()
 		parseEnv()
 		if Cfg.ConfPath != "" {
-			c, err := readServConfFile(Cfg.ConfPath)
-			if err != nil {
-				logger.Log.Error(err.Error())
-			}
-			if Cfg.Adress == "" {
-				Cfg.Adress = c.Adress
-			}
-			if !Cfg.Restore {
-				Cfg.Restore = c.Restore
-			}
-			if Cfg.StoreInterval == 0 {
-				Cfg.StoreInterval = c.StoreInterval
-			}
-			if Cfg.StoreFile == "" {
-				Cfg.StoreFile = c.StoreFile
-			}
-			if Cfg.Dsn == "" {
-				Cfg.Dsn = c.Dsn
-			}
-			if Cfg.CryptoKey == "" {
-				Cfg.CryptoKey = c.CryptoKey
-			}
+			readConfFile()
 		}
 	})
 	return Cfg
 }
 func parseFlag() {
-	Cfg = ServerConfig{}
+
 	flag.StringVar(&Cfg.Adress, "a", "localhost:8080", "adress and port for running")
 	flag.StringVar(&Cfg.HashKey, "k", "", "hash key")
 	flag.StringVar(&Cfg.CryptoKey, "crypto-key", "", "crypto config file path")
 	flag.StringVar(&Cfg.StoreFile, "f", "/tmp/metrics-db.json", "file storage path")
 	flag.StringVar(&Cfg.Dsn, "d", "", "dsn for postgres")
 	flag.StringVar(&Cfg.ConfPath, "c", "", "path for conf file")
+	flag.StringVar(&Cfg.TrustedSubnet, "t", "", "trusted subnet")
 	flag.IntVar(&Cfg.StoreInterval, "i", 300, "data store interval")
 	flag.BoolVar(&Cfg.Restore, "r", true, "restore_flag")
 	flag.Parse()
@@ -75,6 +57,9 @@ func parseFlag() {
 func parseEnv() {
 	if ep := os.Getenv("ADDRESS"); ep != "" {
 		Cfg.Adress = ep
+	}
+	if ts := os.Getenv("TRUSTED_SUBNET"); ts != "" {
+		Cfg.TrustedSubnet = ts
 	}
 	if si := os.Getenv("STORE_INTERVAL"); si != "" {
 		sInt, err := strconv.Atoi(si)
@@ -112,6 +97,33 @@ func parseEnv() {
 		if err != nil {
 			logger.Log.Error(err.Error())
 		}
+	}
+}
+func readConfFile() {
+	c, err := readServConfFile(Cfg.ConfPath)
+	if err != nil {
+		logger.Log.Error(err.Error())
+	}
+	if Cfg.Adress == "" {
+		Cfg.Adress = c.Adress
+	}
+	if !Cfg.Restore {
+		Cfg.Restore = c.Restore
+	}
+	if Cfg.StoreInterval == 0 {
+		Cfg.StoreInterval = c.StoreInterval
+	}
+	if Cfg.StoreFile == "" {
+		Cfg.StoreFile = c.StoreFile
+	}
+	if Cfg.Dsn == "" {
+		Cfg.Dsn = c.Dsn
+	}
+	if Cfg.CryptoKey == "" {
+		Cfg.CryptoKey = c.CryptoKey
+	}
+	if Cfg.TrustedSubnet == "" {
+		Cfg.TrustedSubnet = c.TrustedSubnet
 	}
 }
 func readServConfFile(path string) (ServerConfig, error) {
