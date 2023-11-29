@@ -61,6 +61,7 @@ func main() {
 		panic(err)
 	}
 	stopped := make(chan struct{})
+
 	go func() {
 		sigint := make(chan os.Signal, 1)
 		signal.Notify(sigint, os.Interrupt, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
@@ -117,6 +118,7 @@ func newServer(dsn string) (*http.Server, error) {
 
 	r := chi.NewRouter()
 	r.Use(middleware.WithLogging)
+	r.Use(middleware.WithSubnet)
 	r.Use(middleware.CryptoHandle)
 	r.Use(middleware.GzipHandle)
 	r.Use(h.WithHash)
