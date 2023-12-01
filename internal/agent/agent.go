@@ -46,10 +46,11 @@ func (a Agent) ReadRuntimeMetrics(ctx context.Context, interval int) {
 	for {
 		select {
 		case <-ctx.Done():
-			logger.Log.Info("ReadRuntumeMetrics done")
+			fmt.Println("ReadRuntumeMetrics done")
 			return
 		default:
 			runtime.ReadMemStats(a.m)
+			fmt.Println("read runtime metrics ......")
 			time.Sleep(pollInterval)
 		}
 	}

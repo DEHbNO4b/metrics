@@ -6,7 +6,6 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 
 	"github.com/DEHbNO4b/metrics/internal/agent"
 	"github.com/DEHbNO4b/metrics/internal/config"
@@ -31,5 +30,4 @@ func main() {
 	}()
 
 	<-ctx.Done()
-	time.Sleep(5 * time.Second)
 }
