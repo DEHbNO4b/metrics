@@ -1,20 +1,29 @@
+// packag agent provides automatic collection of metrics and sending them to the server.
 package agent
 
 import (
 	"bytes"
 	"compress/gzip"
+	"context"
 	"crypto/hmac"
+	"crypto/rand"
+	"crypto/rsa"
 	"crypto/sha256"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"net/http"
+	"os"
 	"runtime"
 	"time"
 
+	"github.com/DEHbNO4b/metrics/internal/config"
 	"github.com/DEHbNO4b/metrics/internal/data"
 	logger "github.com/DEHbNO4b/metrics/internal/loger"
 	"go.uber.org/zap"
 )
 
+// Agent struct collects runtume metrics and send them to server
 type Agent struct {
 	m      *runtime.MemStats
 	client http.Client
@@ -22,6 +31,7 @@ type Agent struct {
 	gauges []data.Metrics
 }
 
+// NewAgent return Agent structure with endpoint path inside.
 func NewAgent(endpoint string) Agent {
 	var m runtime.MemStats
 	cl := http.Client{Timeout: 1000 * time.Millisecond}
@@ -30,28 +40,51 @@ func NewAgent(endpoint string) Agent {
 	return a
 }
 
-func (a Agent) ReadRuntimeMetrics(interval int) {
+// ReadRuntimeMetrics reads runtume metrics.
+func (a Agent) ReadRuntimeMetrics(ctx context.Context, interval int) {
 	var pollInterval = time.Duration(interval) * time.Second
 	for {
-		runtime.ReadMemStats(a.m)
-		time.Sleep(pollInterval)
+		select {
+		case <-ctx.Done():
+			fmt.Println("ReadRuntumeMetrics done")
+			return
+		default:
+			runtime.ReadMemStats(a.m)
+			fmt.Println("read runtime metrics ......")
+			time.Sleep(pollInterval)
+		}
 	}
 
 }
-func (a Agent) PullMetrics(interval int, key string) {
+
+// PullMetrics sends metrics to server.
+func (a Agent) PullMetrics(ctx context.Context, interval int, key, crypto string) {
+
 	var reportInterval = time.Duration(interval) * time.Second
-	metrics := make([]data.Metrics, 0, 30)
+
 	for {
-		for _, el := range a.gauges {
-			el.ReadValue(a.m)
-			metrics = append(metrics, el)
+		select {
+		case <-ctx.Done():
+			logger.Log.Info("PullMetrics done")
+			return
+		default:
+			a.trunsform(reportInterval)
 		}
-		var d int64 = 1
-		metrics = append(metrics, data.Metrics{ID: "PollCount", MType: "counter", Delta: &d})
-		go a.sendMetrics(metrics)
-		time.Sleep(reportInterval)
 	}
 
+}
+
+func (a Agent) trunsform(interval time.Duration) {
+
+	metrics := make([]data.Metrics, 0, 30)
+	for _, el := range a.gauges {
+		el.ReadValue(a.m)
+		metrics = append(metrics, el)
+	}
+	var d int64 = 1
+	metrics = append(metrics, data.Metrics{ID: "PollCount", MType: "counter", Delta: &d})
+	go a.sendMetrics(metrics)
+	time.Sleep(interval)
 }
 func (a Agent) sendMetrics(metrics []data.Metrics) {
 	buf := bytes.Buffer{}
@@ -69,6 +102,12 @@ func (a Agent) sendMetrics(metrics []data.Metrics) {
 	}
 	compressor.Write(buf.Bytes())
 	compressor.Close()
+	mes, err := encrypt(compressed)
+	if err != nil {
+		logger.Log.Error(err.Error())
+	} else {
+		compressed = mes
+	}
 	req, err := http.NewRequest(http.MethodPost, a.url+"/updates/", &compressed) // (1)
 	if err != nil {
 		logger.Log.Sugar().Error(err.Error())
@@ -128,4 +167,25 @@ func signature(key string, b []byte) []byte {
 	dst := h.Sum(nil)
 	logger.Log.Sugar().Infof("%x", dst)
 	return dst
+}
+
+func encrypt(b bytes.Buffer) (bytes.Buffer, error) {
+	k, err := config.GetPub()
+	if err != nil {
+		return b, err
+	}
+	rng := rand.Reader
+	pub, ok := k.(rsa.PublicKey)
+	if !ok {
+		return b, errors.New("wrong crypto key")
+	}
+	text, err := rsa.EncryptOAEP(sha256.New(), rng, &pub, b.Bytes(), []byte("metrics"))
+
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error from encryption: %s\n", err)
+		return b, err
+	}
+	buf := bytes.Buffer{}
+	buf.Write(text)
+	return buf, nil
 }
