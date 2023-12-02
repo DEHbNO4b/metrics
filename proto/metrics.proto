@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package ymetrics;
+
+message Metric{
+  int32 id = 1;
+  string type = 2;
+  delta fixed64 = 3;
+  value fixed64 = 4;
+}
+
+message Metrics{
+  repeated Metrics metrics =1;
+}
+
+service Metrics{
+  rpc AddMetric(Metric)returns();
+  rpc GetMetric(Metric)returns(Metric);
+  rpc AddMetrics(Metrics)returns();
+  rpc GetMetrics()returns(Metrics);
+}
