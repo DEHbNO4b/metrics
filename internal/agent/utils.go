@@ -15,11 +15,11 @@ func domainMetricToGrpc(m data.Metrics) *pb.Metric {
 	return &ans
 }
 
-func grpcMetricToDomain(m *pb.Metric) data.Metrics {
-	ans := data.NewMetric()
-	ans.MType = m.Type
-	ans.ID = m.Id
-	*ans.Delta = m.Delta
-	*ans.Value = m.Value
-	return ans
-}
+// func grpcMetricToDomain(m *pb.Metric) data.Metrics {
+// 	ans := data.NewMetric()
+// 	ans.MType = m.Type
+// 	ans.ID = m.Id
+// 	*ans.Delta = m.Delta
+// 	*ans.Value = m.Value
+// 	return ans
+// }

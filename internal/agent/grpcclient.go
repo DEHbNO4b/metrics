@@ -39,13 +39,3 @@ func (g *GrpcClient) SendMetrics(ctx context.Context, metrics []data.Metrics) {
 	}
 	g.Client.AddMetrics(ctx, &pb.AddMetricsRequest{Metrics: gm})
 }
-
-// func (g *GrpcClient) GetSingle(ctx context.Context, metric data.Metrics) (*data.Metrics, error) {
-// 	m := domainMetricToGrpc(metric)
-// 	resp, err := g.Client.GetSingle(ctx, &pb.GetSingleRequest{Metric: &m})
-// 	if err!=nil{
-// 		return nil,err
-// 	}
-// 	dm:=grpcMetricToDomain(resp.Metric)
-// 	return
-// }

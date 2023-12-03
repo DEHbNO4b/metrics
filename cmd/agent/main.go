@@ -12,12 +12,16 @@ import (
 )
 
 func main() {
-	// parseFlag()
+
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	// TODO: initialize config
 	cfg := config.GetAgentCfg()
+
+	// TODO: initialize agent
 	a := agent.NewAgent(cfg.Adress)
+
 	go a.ReadRuntimeMetrics(ctx, cfg.PollInterval)
 	go a.PullMetrics(ctx, cfg.ReportInterval, cfg.HashKey, cfg.CryptoKey)
 
