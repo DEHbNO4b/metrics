@@ -49,12 +49,20 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-
+	// TODO:initialize logger
 	if err := logger.Initialize("info"); err != nil {
 		panic(err)
 	}
-	// cfg := config.GetServCfg()
-	application := appgrpc.New("localhost:3003")
+	// TODO: initialize config
+	cfg := config.GetServCfg()
+	// TODO: initialize storage
+	withDB, err := selectStore(cfg.Dsn, cfg.StoreFile) //выбор способа храниения данных (sqlDB | fileDB) для эксперта
+	if err != nil {
+		panic(err)
+	}
+	expert := expert.NewExpert(expert.WithRAM(maindb.NewMemStorage()), withDB)
+
+	application := appgrpc.New(expert, "localhost:3003")
 	go application.MustRun()
 	// srv, err := newServer(cfg.Dsn)
 	// if err != nil {

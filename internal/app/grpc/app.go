@@ -5,21 +5,22 @@ import (
 	"net"
 
 	"github.com/DEHbNO4b/metrics/internal/grpc/metrics"
+	"github.com/DEHbNO4b/metrics/internal/interfaces"
 	logger "github.com/DEHbNO4b/metrics/internal/loger"
 	"google.golang.org/grpc"
 )
 
 type App struct {
 	gRPCServer *grpc.Server
-	port       string
+	adress     string
 }
 
-func New(port string) *App {
+func New(expert interfaces.MetricsStorage, adress string) *App {
 	grpc := grpc.NewServer()
-	metrics.Register(grpc)
+	metrics.Register(grpc, expert)
 	return &App{
 		gRPCServer: grpc,
-		port:       port,
+		adress:     adress,
 	}
 }
 func (a *App) MustRun() {
@@ -28,7 +29,7 @@ func (a *App) MustRun() {
 	}
 }
 func (a *App) Run() error {
-	l, err := net.Listen("tcp", a.port)
+	l, err := net.Listen("tcp", a.adress)
 	if err != nil {
 		return fmt.Errorf("unable to run grpc server %w", err)
 	}

@@ -18,8 +18,8 @@ type MetricsAPI struct {
 	expert interfaces.MetricsStorage
 }
 
-func Register(gRPC *grpc.Server) {
-	pb.RegisterMetricsServer(gRPC, &MetricsAPI{})
+func Register(gRPC *grpc.Server, expert interfaces.MetricsStorage) {
+	pb.RegisterMetricsServer(gRPC, &MetricsAPI{expert: expert})
 }
 func (m *MetricsAPI) AddSingle(ctx context.Context, in *pb.AddSingleRequest) (*pb.AddSingleResponse, error) {
 	res := pb.AddSingleResponse{}
