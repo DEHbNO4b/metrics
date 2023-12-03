@@ -2,7 +2,6 @@ package agent
 
 import (
 	"context"
-	"fmt"
 	"log"
 
 	"github.com/DEHbNO4b/metrics/internal/data"
@@ -33,7 +32,6 @@ func (g *GrpcClient) SendMetric(ctx context.Context, m data.Metrics, key string)
 
 }
 func (g *GrpcClient) SendMetrics(ctx context.Context, metrics []data.Metrics) {
-	fmt.Println("grpc send metrics..")
 	gm := make([]*pb.Metric, 0, 30)
 	for _, el := range metrics {
 		m := domainMetricToGrpc(el)

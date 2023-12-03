@@ -3,7 +3,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
@@ -18,7 +17,6 @@ func main() {
 	defer cancel()
 
 	cfg := config.GetAgentCfg()
-	fmt.Printf("%+v \n", cfg)
 	a := agent.NewAgent(cfg.Adress)
 	go a.ReadRuntimeMetrics(ctx, cfg.PollInterval)
 	go a.PullMetrics(ctx, cfg.ReportInterval, cfg.HashKey, cfg.CryptoKey)

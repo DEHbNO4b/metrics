@@ -37,7 +37,7 @@ func NewAgent(endpoint string) Agent {
 	if cfg.GRPC {
 		ms = NewGrpcClient(cfg.Adress)
 	} else {
-		ms = NewHttpCLient("http://" + cfg.Adress)
+		ms = NewHTTPClient("http://" + cfg.Adress)
 	}
 	// cl := http.Client{Timeout: 1000 * time.Millisecond}
 	// u := "http://" + endpoint
@@ -68,7 +68,6 @@ func (a Agent) PullMetrics(ctx context.Context, interval int, key, crypto string
 	var reportInterval = time.Duration(interval) * time.Second
 
 	for {
-		fmt.Println("agent pull metrics")
 		select {
 		case <-ctx.Done():
 			logger.Log.Info("PullMetrics done")

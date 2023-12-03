@@ -21,19 +21,19 @@ import (
 	"go.uber.org/zap"
 )
 
-type HttpClient struct {
+type HTTPClient struct {
 	client http.Client
 	addr   string
 }
 
-func NewHttpCLient(addr string) *HttpClient {
+func NewHTTPClient(addr string) *HTTPClient {
 	cl := http.Client{Timeout: 1000 * time.Millisecond}
-	return &HttpClient{
+	return &HTTPClient{
 		client: cl,
 		addr:   addr,
 	}
 }
-func (h *HttpClient) SendMetric(ctx context.Context, m data.Metrics, key string) {
+func (h *HTTPClient) SendMetric(ctx context.Context, m data.Metrics, key string) {
 	var req *http.Request
 	buf := bytes.Buffer{}
 	enc := json.NewEncoder(&buf)
@@ -77,8 +77,7 @@ func signature(key string, b []byte) []byte {
 	logger.Log.Sugar().Infof("%x", dst)
 	return dst
 }
-func (h *HttpClient) SendMetrics(ctx context.Context, metrics []data.Metrics) {
-	fmt.Println("http send metrics")
+func (h *HTTPClient) SendMetrics(ctx context.Context, metrics []data.Metrics) {
 	buf := bytes.Buffer{}
 	enc := json.NewEncoder(&buf)
 	err := enc.Encode(&metrics)
