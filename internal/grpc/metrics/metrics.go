@@ -53,11 +53,15 @@ func (m *MetricsAPI) GetSingle(ctx context.Context, in *pb.GetSingleRequest) (*p
 
 }
 
-// func (m *MetricsAPI) AddMetrics(context.Context, *pb.AddMetricsRequest) (*pb.AddMetricsResponse, error) {
-// 	res := pb.AddMetricsResponse{}
+func (m *MetricsAPI) AddMetrics(ctx context.Context, ms *pb.AddMetricsRequest) (*pb.AddMetricsResponse, error) {
+	res := pb.AddMetricsResponse{}
+	for _, el := range ms.Metrics {
+		metric := grpcMetricToDomain(el)
+		m.expert.SetMetric(metric)
+	}
 
-// 	return &res, nil
-// }
+	return &res, nil
+}
 
 func (m *MetricsAPI) GetMetrics(context.Context, *pb.GetMetricsRequest) (*pb.GetMetricsResponse, error) {
 	res := pb.GetMetricsResponse{}
