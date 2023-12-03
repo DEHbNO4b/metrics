@@ -2,16 +2,15 @@
 package main
 
 import (
-	"context"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"text/template"
-	"time"
 
 	_ "net/http/pprof"
 
+	appgrpc "github.com/DEHbNO4b/metrics/internal/app/grpc"
 	"github.com/DEHbNO4b/metrics/internal/config"
 	"github.com/DEHbNO4b/metrics/internal/expert"
 	"github.com/DEHbNO4b/metrics/internal/handlers"
@@ -54,33 +53,38 @@ func main() {
 	if err := logger.Initialize("info"); err != nil {
 		panic(err)
 	}
-	cfg := config.GetServCfg()
+	// cfg := config.GetServCfg()
+	application := appgrpc.New("localhost:3003")
+	go application.MustRun()
+	// srv, err := newServer(cfg.Dsn)
+	// if err != nil {
+	// 	panic(err)
+	// }
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, os.Interrupt, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
+	signal := <-stop
+	logger.Log.Info("stopped application", zap.Any("signal", signal))
+	application.Stop()
 
-	srv, err := newServer(cfg.Dsn)
-	if err != nil {
-		panic(err)
-	}
-	stopped := make(chan struct{})
+	// go func() {
+	// 	sigint := make(chan os.Signal, 1)
+	// 	signal.Notify(sigint, os.Interrupt, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
+	// 	<-sigint
+	// 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	// 	defer cancel()
+	// 	if err := srv.Shutdown(ctx); err != nil {
+	// 		logger.Log.Error("HTTP Server Shutdown Error", zap.Error(err))
+	// 	}
+	// 	close(stopped)
+	// }()
 
-	go func() {
-		sigint := make(chan os.Signal, 1)
-		signal.Notify(sigint, os.Interrupt, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
-		<-sigint
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		defer cancel()
-		if err := srv.Shutdown(ctx); err != nil {
-			logger.Log.Error("HTTP Server Shutdown Error", zap.Error(err))
-		}
-		close(stopped)
-	}()
+	// logger.Log.Info("Running server", zap.String("address", cfg.Adress))
+	// // start HTTP server
+	// if err := srv.ListenAndServe(); err != http.ErrServerClosed {
+	// 	logger.Log.Fatal("HTTP server ListenAndServe Error", zap.Error(err))
+	// }
 
-	logger.Log.Info("Running server", zap.String("address", cfg.Adress))
-	// start HTTP server
-	if err := srv.ListenAndServe(); err != http.ErrServerClosed {
-		logger.Log.Fatal("HTTP server ListenAndServe Error", zap.Error(err))
-	}
-
-	<-stopped
+	// <-stopped
 
 	logger.Log.Info("Have a nice day!")
 }

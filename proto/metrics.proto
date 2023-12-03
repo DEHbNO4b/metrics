@@ -1,21 +1,45 @@
 syntax = "proto3";
 
-package ymetrics;
+package metrics;
+
+option go_package = "metrics/proto";
 
 message Metric{
-  int32 id = 1;
+  string id = 1;
   string type = 2;
-  delta fixed64 = 3;
-  value fixed64 = 4;
+  sint64 delta  = 3;
+  double value  = 4;
+}
+message AddSingleRequest{
+  Metric metric =1;
+}
+message AddSingleResponse{
 }
 
-message Metrics{
-  repeated Metrics metrics =1;
+message GetSingleRequest{
+ Metric metric =1;
 }
+message GetSingleResponse{
+  Metric metric =1;
+}
+
+message AddMetricsRequest{
+  repeated Metric metrics =1;
+}
+message AddMetricsResponse{
+}
+
+message GetMetricsRequest{
+}
+message GetMetricsResponse{
+  repeated Metric metrics =1;
+}
+
+
 
 service Metrics{
-  rpc AddMetric(Metric)returns();
-  rpc GetMetric(Metric)returns(Metric);
-  rpc AddMetrics(Metrics)returns();
-  rpc GetMetrics()returns(Metrics);
+  rpc AddSingle(AddSingleRequest)returns(AddSingleResponse);
+  rpc GetSingle(GetSingleRequest)returns(GetSingleResponse);
+  rpc AddMetrics(AddMetricsRequest)returns(AddMetricsResponse);
+  rpc GetMetrics(GetMetricsRequest)returns(GetMetricsResponse);
 }
