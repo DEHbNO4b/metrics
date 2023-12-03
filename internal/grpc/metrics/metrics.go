@@ -23,10 +23,12 @@ func Register(gRPC *grpc.Server, expert interfaces.MetricsStorage) {
 }
 func (m *MetricsAPI) AddSingle(ctx context.Context, in *pb.AddSingleRequest) (*pb.AddSingleResponse, error) {
 	res := pb.AddSingleResponse{}
+
 	err := validate(in.Metric)
 	if err != nil {
 		return nil, err
 	}
+
 	metric := grpcMetricToDomain(in.Metric)
 	m.expert.SetMetric(metric)
 	return &res, nil

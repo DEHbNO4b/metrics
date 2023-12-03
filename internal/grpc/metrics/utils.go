@@ -25,10 +25,10 @@ func domainMetricToGrps(m data.Metrics) *pb.Metric {
 }
 func validate(m *pb.Metric) error {
 	if m.Id == "" || m.Type == "" {
-		status.Error(codes.InvalidArgument, "wrong request data")
+		return status.Error(codes.InvalidArgument, "wrong request data")
 	}
 	if m.Type != "gauge" && m.Type != "counter" {
-		status.Errorf(codes.InvalidArgument, "wrong metric type %s", m.Type)
+		return status.Errorf(codes.InvalidArgument, "wrong metric type %s", m.Type)
 	}
 	return nil
 }

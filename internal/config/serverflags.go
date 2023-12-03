@@ -15,6 +15,7 @@ import (
 type ServerConfig struct {
 	Adress        string `json:"address"`
 	Restore       bool   `json:"restore"`
+	GRPC          bool   `json:"grpc"`
 	StoreInterval int    `json:"store_intervAL"`
 	StoreFile     string `json:"store_file"`
 	Dsn           string `json:"database_dsn"`
@@ -51,6 +52,7 @@ func parseFlag() {
 	flag.StringVar(&Cfg.TrustedSubnet, "t", "", "trusted subnet")
 	flag.IntVar(&Cfg.StoreInterval, "i", 300, "data store interval")
 	flag.BoolVar(&Cfg.Restore, "r", true, "restore_flag")
+	flag.BoolVar(&Cfg.GRPC, "g", false, "grpc server")
 	flag.Parse()
 
 }
@@ -87,10 +89,18 @@ func parseEnv() {
 	if r := os.Getenv("RESTORE"); r != "" {
 		re, err := strconv.ParseBool(r)
 		if err != nil {
-			logger.Log.Sugar().Error("unable to convert STORE_INTERVAL to int", err.Error())
+			logger.Log.Sugar().Error("unable to convert RESTOREL to bool", err.Error())
 			return
 		}
 		Cfg.Restore = re
+	}
+	if g := os.Getenv("GRPC_SERVER"); g != "" {
+		re, err := strconv.ParseBool(g)
+		if err != nil {
+			logger.Log.Sugar().Error("unable to convert GRPC_SERVER to bool", err.Error())
+			return
+		}
+		Cfg.GRPC = re
 	}
 	if Cfg.CryptoKey != "" {
 		_, err := DecPr(Cfg.CryptoKey)

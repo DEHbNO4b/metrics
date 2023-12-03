@@ -2,7 +2,6 @@
 package main
 
 import (
-	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -10,14 +9,8 @@ import (
 
 	_ "net/http/pprof"
 
-	appgrpc "github.com/DEHbNO4b/metrics/internal/app/grpc"
-	"github.com/DEHbNO4b/metrics/internal/config"
-	"github.com/DEHbNO4b/metrics/internal/expert"
-	"github.com/DEHbNO4b/metrics/internal/handlers"
+	"github.com/DEHbNO4b/metrics/internal/app"
 	logger "github.com/DEHbNO4b/metrics/internal/loger"
-	"github.com/DEHbNO4b/metrics/internal/maindb"
-	"github.com/DEHbNO4b/metrics/internal/middleware"
-	"github.com/go-chi/chi/v5"
 	_ "github.com/golang/mock/mockgen/model"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"go.uber.org/zap"
@@ -54,16 +47,17 @@ func main() {
 		panic(err)
 	}
 	// TODO: initialize config
-	cfg := config.GetServCfg()
+	// cfg := config.GetServCfg()
 	// TODO: initialize storage
-	withDB, err := selectStore(cfg.Dsn, cfg.StoreFile) //выбор способа храниения данных (sqlDB | fileDB) для эксперта
-	if err != nil {
-		panic(err)
-	}
-	expert := expert.NewExpert(expert.WithRAM(maindb.NewMemStorage()), withDB)
+	// withDB, err := selectStore(cfg.Dsn, cfg.StoreFile) //выбор способа храниения данных (sqlDB | fileDB) для эксперта
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// expert := expert.NewExpert(expert.WithRAM(maindb.NewMemStorage()), withDB)
 
-	application := appgrpc.New(expert, "localhost:3003")
-	go application.MustRun()
+	application := app.New()
+	go application.Server.MustRun()
+
 	// srv, err := newServer(cfg.Dsn)
 	// if err != nil {
 	// 	panic(err)
@@ -72,7 +66,7 @@ func main() {
 	signal.Notify(stop, os.Interrupt, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 	signal := <-stop
 	logger.Log.Info("stopped application", zap.Any("signal", signal))
-	application.Stop()
+	application.Server.Stop()
 
 	// go func() {
 	// 	sigint := make(chan os.Signal, 1)
@@ -97,56 +91,46 @@ func main() {
 	logger.Log.Info("Have a nice day!")
 }
 
-func selectStore(dsn string, f string) (expert.ExpertConfiguration, error) {
-	if dsn != "" {
-		db, err := maindb.NewPostgresDB(dsn)
-		if err != nil {
-			return nil, err
-		}
-		return expert.WithDatabase(db), nil
-	}
-	return expert.WithDatabase(maindb.NewFileDB(f)), nil
-}
+// func newServer(dsn string) (*http.Server, error) {
+// 	cfg := config.GetServCfg()
+// 	var ph *handlers.Pinger
+// 	if dsn != "" {
+// 		sqlDB, err := maindb.NewPostgresDB(dsn)
+// 		if err != nil {
+// 			return nil, err
+// 		}
+// 		defer sqlDB.Close()
+// 		ph = handlers.NewPinger(sqlDB) //хэндлер для пинга
+// 	}
+// 	withDB, err := selectStore(dsn, cfg.StoreFile) //выбор способа храниения данных (sqlDB | fileDB) для эксперта
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	expert := expert.NewExpert(expert.WithRAM(maindb.NewMemStorage()), withDB)
+// 	defer expert.StoreData() //сохранение данный при завершении программы
 
-func newServer(dsn string) (*http.Server, error) {
-	cfg := config.GetServCfg()
-	var ph *handlers.Pinger
-	if dsn != "" {
-		sqlDB, err := maindb.NewPostgresDB(dsn)
-		if err != nil {
-			return nil, err
-		}
-		defer sqlDB.Close()
-		ph = handlers.NewPinger(sqlDB) //хэндлер для пинга
-	}
-	withDB, err := selectStore(dsn, cfg.StoreFile) //выбор способа храниения данных (sqlDB | fileDB) для эксперта
-	if err != nil {
-		return nil, err
-	}
-	expert := expert.NewExpert(expert.WithRAM(maindb.NewMemStorage()), withDB)
-	defer expert.StoreData() //сохранение данный при завершении программы
-	h := middleware.Hash{Key: []byte(cfg.HashKey)}
-	mh := handlers.NewMetrics(expert) //хэндлер для приема и отправки метрик
+// 	h := middleware.Hash{Key: []byte(cfg.HashKey)}
+// 	mh := handlers.NewMetrics(expert) //хэндлер для приема и отправки метрик
 
-	r := chi.NewRouter()
-	r.Use(middleware.WithLogging)
-	r.Use(middleware.WithSubnet)
-	r.Use(middleware.CryptoHandle)
-	r.Use(middleware.GzipHandle)
-	r.Use(h.WithHash)
-	r.Mount("/debug", middleware.Profiler())
-	r.Post(`/update/{type}/{name}/{value}`, http.HandlerFunc(mh.SetMetricsURL))
-	r.Get(`/value/{type}/{name}`, http.HandlerFunc(mh.GetMetricURL))
-	r.Post(`/update/`, http.HandlerFunc(mh.SetMetricJSON))
-	r.Post(`/updates/`, http.HandlerFunc(mh.SetMetricsJSON))
-	r.Post(`/value/`, http.HandlerFunc(mh.GetMetricJSON))
-	if dsn != "" {
-		r.Get(`/ping`, http.HandlerFunc(ph.PingDB))
-	}
-	r.Get(`/`, mh.GetMetrics)
-	srv := &http.Server{
-		Addr:    cfg.Adress,
-		Handler: r,
-	}
-	return srv, nil
-}
+// 	r := chi.NewRouter()
+// 	r.Use(middleware.WithLogging)
+// 	r.Use(middleware.WithSubnet)
+// 	r.Use(middleware.CryptoHandle)
+// 	r.Use(middleware.GzipHandle)
+// 	r.Use(h.WithHash)
+// 	r.Mount("/debug", middleware.Profiler())
+// 	r.Post(`/update/{type}/{name}/{value}`, http.HandlerFunc(mh.SetMetricsURL))
+// 	r.Get(`/value/{type}/{name}`, http.HandlerFunc(mh.GetMetricURL))
+// 	r.Post(`/update/`, http.HandlerFunc(mh.SetMetricJSON))
+// 	r.Post(`/updates/`, http.HandlerFunc(mh.SetMetricsJSON))
+// 	r.Post(`/value/`, http.HandlerFunc(mh.GetMetricJSON))
+// 	if dsn != "" {
+// 		r.Get(`/ping`, http.HandlerFunc(ph.PingDB))
+// 	}
+// 	r.Get(`/`, mh.GetMetrics)
+// 	srv := &http.Server{
+// 		Addr:    cfg.Adress,
+// 		Handler: r,
+// 	}
+// 	return srv, nil
+// }
