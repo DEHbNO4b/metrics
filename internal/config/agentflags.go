@@ -31,12 +31,13 @@ type AgentConfig struct {
 	ReportInterval int    `json:"report_interval"` //"report_interval": "1s", // аналог переменной окружения REPORT_INTERVAL или флага -r
 	PollInterval   int    `json:"poll_interval"`   //"poll_interval": "1s", // аналог переменной окружения POLL_INTERVAL или флага -p
 	CryptoKey      string `json:"crypto_key"`      //"crypto_key": "/path/to/key.pem" // аналог переменной окружения CRYPTO_KEY или флага -crypto-key
+	GRPC           bool   `json:"grpc"`
 	HashKey        string
 	ConfPath       string
 }
 
 func GetAgentCfg() AgentConfig {
-	AgentCfg = AgentConfig{}
+	// AgentCfg = AgentConfig{}
 	agentOnce.Do(func() {
 		parseAgentFlag()
 		parseAgentEnv()
@@ -70,6 +71,7 @@ func parseAgentFlag() {
 	flag.IntVar(&AgentCfg.ReportInterval, "r", 10, "report interval")
 	flag.IntVar(&AgentCfg.PollInterval, "p", 2, "poll interval")
 	flag.StringVar(&AgentCfg.CryptoKey, "crypto-key", "", "crypto config file path")
+	flag.BoolVar(&AgentCfg.GRPC, "g", false, "grpc enable")
 	flag.Parse()
 
 }
@@ -101,6 +103,14 @@ func parseAgentEnv() {
 		if err != nil {
 			fmt.Println(err)
 		}
+	}
+	if g := os.Getenv("GRPC_ENABLED"); g != "" {
+		re, err := strconv.ParseBool(g)
+		if err != nil {
+			logger.Log.Sugar().Error("unable to convert GRPC_ENABLED to bool", err.Error())
+			return
+		}
+		AgentCfg.GRPC = re
 	}
 }
 func readAgentConfFile(path string) (AgentConfig, error) {

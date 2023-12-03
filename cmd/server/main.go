@@ -42,12 +42,12 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	// TODO:initialize logger
+	// TODO: initialize logger
 	if err := logger.Initialize("info"); err != nil {
 		panic(err)
 	}
-	// TODO: run application
 
+	// TODO: run application
 	application := app.New()
 	go application.Server.MustRun()
 

@@ -94,10 +94,10 @@ func parseEnv() {
 		}
 		Cfg.Restore = re
 	}
-	if g := os.Getenv("GRPC_SERVER"); g != "" {
+	if g := os.Getenv("GRPC_ENABLED"); g != "" {
 		re, err := strconv.ParseBool(g)
 		if err != nil {
-			logger.Log.Sugar().Error("unable to convert GRPC_SERVER to bool", err.Error())
+			logger.Log.Sugar().Error("unable to convert GRPC_ENABLED to bool", err.Error())
 			return
 		}
 		Cfg.GRPC = re

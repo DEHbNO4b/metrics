@@ -32,6 +32,8 @@ func (m *Metrics) ReadValue(mem *runtime.MemStats) {
 	}
 	val := reader(mem)
 	m.Value = &val
+	var delta int64 = 0
+	m.Delta = &delta
 }
 
 var metricReaders = map[string]func(m *runtime.MemStats) float64{

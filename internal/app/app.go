@@ -23,9 +23,12 @@ func New() *App {
 	if err != nil {
 		panic(err)
 	}
+	// TODO: create service layer expert
 	expert := expert.NewExpert(expert.WithRAM(maindb.NewMemStorage()), withDB)
 
 	var srv metricServer
+
+	// TODO: create  (gRPC | http)   server
 	if cfg.GRPC {
 		srv = appgrpc.New(expert, cfg.Adress)
 	} else {
