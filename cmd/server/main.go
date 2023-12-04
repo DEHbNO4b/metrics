@@ -1,59 +1,61 @@
+// package server provides management and storing incoming metrics data.
 package main
 
 import (
-	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"text/template"
 
-	"github.com/DEHbNO4b/metrics/internal/expert"
-	"github.com/DEHbNO4b/metrics/internal/handlers"
+	_ "net/http/pprof"
+
+	"github.com/DEHbNO4b/metrics/internal/app"
 	logger "github.com/DEHbNO4b/metrics/internal/loger"
-	"github.com/DEHbNO4b/metrics/internal/maindb"
-	"github.com/DEHbNO4b/metrics/internal/middleware"
-	"github.com/go-chi/chi/v5"
 	_ "github.com/golang/mock/mockgen/model"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"go.uber.org/zap"
 )
 
-func main() {
-	if err := logger.Initialize("info"); err != nil {
-		panic(err)
-	}
-	parseFlag()
-	sqlDB := maindb.NewPostgresDB(dsn)
-	defer sqlDB.Close()
-	ph := handlers.NewPinger(sqlDB) //хэндлер для пинга
-	config := expert.StoreConfig{
-		StoreInterval: storeInterval,
-		Filepath:      filestoragepath,
-		Restore:       restore,
-	}
-	withDB := selectStore(dsn, filestoragepath) //выбор способа храниения данных (sqlDB | fileDB) для эксперта
-	expert := expert.NewExpert(expert.WithConfig(config), expert.WithRAM(maindb.NewMemStorage()), withDB)
-	defer expert.StoreData() //сохранение данный при завершении программы
-	h := middleware.Hash{Key: []byte(key)}
-	mh := handlers.NewMetrics(expert) //хэндлер для приема и отправки метрик
-	r := chi.NewRouter()
+var (
+	buildVersion string
+	buildDate    string
+	buildCommit  string
+)
 
-	r.Use(middleware.WithLogging)
-	r.Use(middleware.GzipHandle)
-	r.Use(h.WithHash)
-	r.Post(`/update/{type}/{name}/{value}`, http.HandlerFunc(mh.SetMetricsURL))
-	r.Get(`/value/{type}/{name}`, http.HandlerFunc(mh.GetMetricURL))
-	r.Post(`/update/`, http.HandlerFunc(mh.SetMetricJSON))
-	r.Post(`/updates/`, http.HandlerFunc(mh.SetMetricsJSON))
-	r.Post(`/value/`, http.HandlerFunc(mh.GetMetricJSON))
-	r.Get(`/ping`, http.HandlerFunc(ph.PingDB))
-	r.Get(`/`, mh.GetMetrics)
-	logger.Log.Info("Running server", zap.String("address", runAddr))
-	err := http.ListenAndServe(runAddr, r)
+type build struct {
+	BuildVersion string
+	BuildDate    string
+	BuildCommit  string
+}
+
+const Template = `Build version: {{if .BuildVersion}}{{.buildVersion}}{{else}}N/A{{end}}
+Build date: {{if .BuildDate}}{{.buildDate}}{{else}}N/A{{end}}
+Build commit: {{if .BuildCommit}}{{.buildCommit}}{{else}}N/A{{end}}
+`
+
+func main() {
+	b := build{BuildVersion: buildVersion,
+		BuildDate:   buildDate,
+		BuildCommit: buildCommit}
+	t := template.Must(template.New("build").Parse(Template))
+	err := t.Execute(os.Stdout, b)
 	if err != nil {
 		panic(err)
 	}
-}
-
-func selectStore(dsn string, f string) expert.ExpertConfiguration {
-	if dsn != "" {
-		return expert.WithDatabase(maindb.NewPostgresDB(dsn))
+	// TODO: initialize logger
+	if err := logger.Initialize("info"); err != nil {
+		panic(err)
 	}
-	return expert.WithDatabase(maindb.NewFileDB(f))
+
+	// TODO: run application
+	application := app.New()
+	go application.Server.MustRun()
+
+	// TODO: Gracafull Shutdown
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, os.Interrupt, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
+	signal := <-stop
+	logger.Log.Info("stopped application", zap.Any("signal", signal))
+	application.Server.Stop()
+	logger.Log.Info("Have a nice day!")
 }
